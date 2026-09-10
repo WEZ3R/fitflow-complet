@@ -1,5 +1,0 @@
-outils\dictee\transcriptions\dictee_2026-09-07_16h32.wav
-outils\dictee\transcriptions\dictee_2026-09-07_16h33.wav
-outils\dictee\transcriptions\dictee_2026-09-07_17h05.wav
-outils\dictee\transcriptions\dictee_2026-09-07_17h06.wav
-outils\dictee\transcriptions\dictee_2026-09-08_11h39.wav
