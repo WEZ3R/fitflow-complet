@@ -1,0 +1,20 @@
+# Dépendances — 3988 fichiers étaient versionnés, ce qui a fait voyager des
+# binaires natifs Windows jusque sur des machines Linux (bcrypt : invalid ELF header)
+node_modules/
+
+# Secrets — ne JAMAIS versionner : voir .env.example pour la liste des variables
+.env
+.env.*
+!.env.example
+
+# Données personnelles : photos de profil et exports de base
+uploads/*
+!uploads/.gitkeep
+backups/*
+!backups/.gitkeep
+
+# Artefacts
+*.log
+npm-debug.log*
+coverage/
+.DS_Store

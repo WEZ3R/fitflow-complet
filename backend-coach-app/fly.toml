@@ -1,0 +1,46 @@
+# Déploiement de l'API FitFlow sur Fly.io.
+#
+# L'image est construite depuis le Dockerfile de production du dépôt : Fly ne fait que
+# l'exécuter. Les secrets (DATABASE_URL, JWT_SECRET, clés Supabase) ne figurent pas ici —
+# ce fichier est versionné. Ils sont posés par `flyctl secrets set` et injectés au
+# démarrage comme variables d'environnement.
+
+app = 'fitflow-api'
+primary_region = 'cdg'          # Paris : les utilisateurs et la base sont en Europe
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  # Valeurs non sensibles seulement. NODE_ENV=production active les garde-fous de
+  # src/config/env.js, qui refuse de démarrer si un secret obligatoire manque.
+  NODE_ENV = 'production'
+  PORT = '5001'
+  # Le disque d'une machine Fly est réinitialisé à chaque déploiement : les fichiers
+  # déposés doivent aller dans un stockage objet, pas sur ce disque.
+  STORAGE_DRIVER = 'supabase'
+
+[http_service]
+  internal_port = 5001
+  force_https = true
+
+  # Mise en veille sans trafic, puis réveil à la première requête. C'est ce qui ramène
+  # le coût près de zéro ; la contrepartie est un premier appel plus lent après une
+  # période d'inactivité.
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  # 0 : aucune machine maintenue allumée. Passer à 1 avant une démonstration en direct
+  # pour supprimer le délai de réveil.
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    # Sonde applicative : /api/health interroge le serveur, pas seulement le port TCP.
+    # Une machine qui écoute mais dont la base est injoignable doit être vue comme morte.
+    path = '/api/health'
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'              # 256 Mo suffisent au repos, mais pas au client Prisma

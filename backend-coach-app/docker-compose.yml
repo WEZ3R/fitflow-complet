@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fitflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: coaching_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d coaching_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache du compteur de notifications non lues (cf. src/config/redis.js).
+  # Le backend fonctionne sans : s'il ne joint pas Redis, il interroge PostgreSQL.
+  # Ce service est donc un accélérateur, pas une dépendance dure.
+  redis:
+    image: redis:7-alpine
+    container_name: fitflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: fitflow-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      # src/config/database.js reconstruit l'URL depuis ces variables.
+      # Elles priment sur le .env (dotenv n'écrase pas les variables déjà définies).
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: coaching_app
+      # Utilisée par la CLI Prisma (migrate, db push, studio)
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/coaching_app
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: "your-super-secret-jwt-key-change-this-in-production"
+      NODE_ENV: development
+      # Origine CORS : le dashboard Next.js tourne sur le port 3000
+      FRONTEND_URL: "http://localhost:3000"
+    volumes:
+      # Bind mount du code : nodemon recharge à chaud les modifs faites sous Windows
+      - .:/app
+      # node_modules reste dans le conteneur (binaires Linux, pas ceux de Windows)
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  # Réutilise le volume existant qui contient les données déjà seedées
+  postgres_data:
+    external: true
+    name: backend-coach-app_postgres_data

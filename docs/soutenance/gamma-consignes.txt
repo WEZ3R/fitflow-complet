@@ -1,0 +1,22 @@
+Support de soutenance orale, en français, pour le titre professionnel
+de Concepteur Développeur d'Applications. Public : un jury de professionnels.
+
+CHARTE GRAPHIQUE — à respecter strictement :
+fond graphite très sombre #272727, cartes et encadrés #323232, accent vert lime #85e859 réservé aux titres et aux chiffres clés, texte blanc #ffffff, texte secondaire gris clair #a8a8a8
+Fond sombre sur toutes les cartes, jamais de fond clair.
+
+CONTENU — contraintes impératives :
+- Ne rien inventer. N'ajoute aucun chiffre, aucune métrique, aucune date, aucun nom de
+  technologie qui ne figure pas dans le texte fourni. Les chiffres présents sont des
+  mesures réelles : ne les arrondis pas, ne les modifie pas.
+- Conserve l'ordre des cartes et le découpage fourni. Chaque bloc séparé par --- est une
+  carte. Les huit cartes en titre de niveau 1 sont des séparateurs de partie et doivent
+  garder ce rôle visuel.
+- Conserve le ton : sobre, factuel, technique, sans superlatif ni vocabulaire commercial.
+- Reste en français, y compris dans les légendes.
+
+ILLUSTRATIONS :
+Sobres et abstraites, sur fond sombre #272727, avec un accent vert lime #85e859. Style
+éditorial technique et géométrique. Pas de texte incrusté, pas de personnage
+photoréaliste, pas de logo. Sujets : le coaching sportif, l'architecture logicielle, les
+bases de données, la sécurité, les tests, le déploiement.

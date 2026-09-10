@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+
+# 86 Mo d'historique qui n'ont rien à faire dans le contexte de build
+.git
+.github

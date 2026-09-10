@@ -1,0 +1,720 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>FitFlow — Parcours coach et client</title>
+<style>
+@page { size: A4; margin: 16mm 16mm 14mm; }
+@page :first { margin: 0; }
+:root{
+  --graphite:#272727; --card:#323232; --nav:#1f1f1f; --raised:#3d3d3d;
+  --accent:#85e859; --accent-deep:#2d7e00; --accent-ink:#1c1c1c;
+  --accent-tint:#eefbe6; --accent-line:#cdf0ba;
+  --ink:#1a1a1a; --ink-soft:#5b5f5a; --line:#dfe3dd; --paper:#ffffff;
+}
+*{box-sizing:border-box;}
+body{font-family:"Geist","Segoe UI",-apple-system,Helvetica,Arial,sans-serif;font-size:9.4pt;line-height:1.5;color:var(--ink);margin:0;}
+code,pre{font-family:"Geist Mono","Cascadia Mono",Consolas,monospace;}
+
+/* ---------- Couverture ---------- */
+.cover{background:var(--nav);color:#f2f2f2;height:297mm;padding:26mm 20mm;page-break-after:always;position:relative;}
+.cover .rule{width:34mm;height:4px;background:var(--accent);margin-bottom:9mm;}
+.cover h1{font-size:44pt;margin:0;letter-spacing:-1.4pt;font-weight:700;color:#fff;line-height:1;}
+.cover .accentword{color:var(--accent);}
+.cover .tag{font-size:13pt;color:#c9cec6;margin:5mm 0 0;font-weight:400;}
+.cover .promise{margin-top:12mm;padding-left:5mm;border-left:3px solid var(--accent);font-size:11pt;color:#e6eae2;font-style:italic;max-width:120mm;}
+.cover .stack{margin-top:16mm;display:flex;gap:3mm;flex-wrap:wrap;}
+.cover .chip{border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:1.6mm 4.5mm;font-size:8.6pt;color:#d6dbd2;}
+.cover .foot{position:absolute;bottom:22mm;left:20mm;right:20mm;border-top:1px solid rgba(255,255,255,.15);padding-top:6mm;font-size:10pt;color:#b9bfb4;}
+.cover .foot .cert{color:var(--accent);font-weight:600;font-size:11pt;display:block;margin-bottom:2.5mm;}
+
+/* ---------- Structure ---------- */
+h2{font-size:15pt;margin:0 0 5mm;padding:3mm 0 3mm 5mm;border-left:5px solid var(--accent);background:var(--graphite);color:#fff;letter-spacing:-.3pt;page-break-after:avoid;}
+h2 .num{color:var(--accent);font-weight:700;margin-right:2.5mm;}
+h3{font-size:11pt;margin:6mm 0 2mm;color:#111;border-bottom:1px solid var(--line);padding-bottom:1.2mm;page-break-after:avoid;}
+h4{font-size:9.6pt;margin:4mm 0 1.5mm;color:var(--accent-deep);page-break-after:avoid;}
+p{margin:0 0 2.4mm;text-align:justify;}
+ul,ol{margin:0 0 2.6mm;padding-left:5.5mm;}
+li{margin-bottom:1.1mm;}
+.part{page-break-before:always;}
+strong{color:#000;}
+
+/* ---------- Tableaux ---------- */
+table{width:100%;border-collapse:collapse;margin:0 0 3mm;font-size:8.5pt;}
+th{background:var(--graphite);color:#fff;text-align:left;font-weight:600;}
+th,td{border:1px solid var(--line);padding:1.5mm 2.2mm;vertical-align:top;}
+tbody tr:nth-child(even){background:#fafbf9;}
+td code{background:#f1f3ef;padding:.3mm 1mm;border-radius:3px;font-size:7.8pt;}
+
+/* ---------- Blocs ---------- */
+pre{background:var(--nav);color:#e8ece5;padding:3mm 4mm;border-radius:5px;font-size:7.7pt;line-height:1.42;overflow-x:auto;margin:0 0 1.5mm;white-space:pre-wrap;}
+pre .c{color:#8f9a86;}
+.fig{font-size:8pt;color:var(--ink-soft);margin:0 0 3.5mm;padding-left:1mm;border-left:2px solid var(--accent);padding:1mm 0 1mm 2.5mm;}
+.fig b{color:var(--accent-deep);}
+.todo{background:#fff8e6;border:1px dashed #d8a300;border-radius:5px;padding:2.5mm 3.5mm;margin:0 0 3mm;font-size:8.6pt;}
+.todo b{color:#8a6100;}
+.warn{background:#fff1f0;border-left:4px solid #d64545;padding:2.5mm 3.5mm;margin:0 0 3mm;font-size:8.6pt;}
+.warn b{color:#b32020;}
+.decision{border:1px solid var(--accent-line);border-radius:6px;background:var(--accent-tint);padding:3mm 4mm;margin:0 0 3.5mm;}
+.decision h4{margin-top:0;color:var(--accent-deep);font-size:10pt;}
+.decision dl{margin:0;}
+.decision dt{font-weight:600;font-size:8.4pt;color:#3f5a30;margin-top:1.8mm;}
+.decision dd{margin:0 0 0 0;font-size:8.8pt;}
+.case{border:1px solid var(--line);border-radius:6px;padding:3mm 4mm;margin:0 0 4mm;page-break-inside:avoid;}
+.case h4{margin-top:0;}
+.kpi{display:flex;gap:3mm;margin:0 0 4mm;flex-wrap:wrap;}
+.kpi > div{flex:1;min-width:32mm;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:5px;padding:2.5mm 3mm;}
+.kpi .n{font-size:16pt;font-weight:700;color:var(--graphite);line-height:1.1;}
+.kpi .l{font-size:7.6pt;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.3pt;}
+.avoid{page-break-inside:avoid;}
+.st{font-weight:700;}
+</style>
+<div class="cover">
+<div class="rule"></div>
+<h1>Parcours <span class="accentword">coach</span><br>et <span class="accentword">client</span></h1>
+<p class="tag">Le code de FitFlow, écran par écran et requête par requête</p>
+<div class="promise">« Chaque étape d'un parcours utilisateur, jusqu'au fichier, à la route et à la requête SQL qui l'exécutent. »</div>
+<div class="stack">
+<span class="chip">3 applications</span>
+<span class="chip">25 modules d'API</span>
+<span class="chip">133 endpoints</span>
+<span class="chip">36 modèles</span>
+</div>
+<div class="foot">
+<span class="cert">Document de préparation à la soutenance</span>
+Marc YRIUS — relevé dans le code le 3 septembre 2026<br>
+Complément du dossier de projet · ne fait pas partie du dossier remis
+</div>
+</div>
+
+<h2><span class="num">—</span>Comment lire ce document</h2>
+
+<p><strong>Objet.</strong> Le dossier de projet explique <em>ce que fait</em> FitFlow et <em>pourquoi</em> les décisions ont été prises. Ce document-ci explique <em>comment le code l'exécute</em>, pas à pas, sur les deux parcours qui portent le produit : celui du coach et celui du client. Il est fait pour être révisé avant la soutenance et pour tenir une question technique précise sans hésiter.</p>
+
+<p><strong>Provenance.</strong> Tout ce qui suit a été lu dans le code le 3 septembre 2026 — pas repris du dossier. Chaque étape cite son fichier et sa ligne d'entrée. Là où le code contredit le dossier, c'est signalé sur place et récapitulé en partie 9 : mieux vaut le savoir avant qu'un examinateur ouvre le dépôt.</p>
+
+<div class="decision">
+<h4>Convention de lecture d'une étape</h4>
+<p>Chaque étape d'un parcours se lit sur cinq niveaux, toujours dans le même ordre :</p>
+<dl>
+<dt>Écran</dt><dd>le fichier de l'interface, et le geste de l'utilisateur</dd>
+<dt>Appel</dt><dd>la fonction du client HTTP, et la requête réellement émise</dd>
+<dt>Route</dt><dd>le module Express et les middlewares traversés</dd>
+<dt>Controller</dt><dd>la fonction serveur, ses contrôles et sa requête Prisma</dd>
+<dt>Données</dt><dd>les tables touchées, et les effets de bord</dd>
+</dl>
+</div>
+
+<h2><span class="num">1</span>Vue d'ensemble en une page</h2>
+
+<h3>1.1 Trois applications, un seul serveur de vérité</h3>
+
+<table>
+<tr><th style="width:22%">Application</th><th style="width:26%">Technologie</th><th>Rôle dans les parcours</th></tr>
+<tr><td><strong>Dashboard web</strong><br><code>fitflow-dashboard</code></td><td>Next.js 16 (App Router), React 19, TypeScript, Tailwind 4</td><td>Parcours <strong>coach</strong> complet ; parcours client en version allégée ; écrans d'administration</td></tr>
+<tr><td><strong>Application mobile</strong><br><code>coach-mobile-app</code></td><td>React Native 0.81 sur Expo 54, JavaScript</td><td>Parcours <strong>client</strong> en salle ; <strong>et aussi un parcours coach</strong> — voir partie 6</td></tr>
+<tr><td><strong>API</strong><br><code>backend-coach-app</code></td><td>Node 22, Express 4, Prisma 5, PostgreSQL</td><td>Toute la logique métier, l'autorisation, les tâches planifiées</td></tr>
+</table>
+
+<p>Les deux clients ne partagent aucun code : ils partagent un <strong>contrat</strong>. Chacun a son propre module d'appel HTTP — <code>fitflow-dashboard/lib/api.ts</code> et <code>coach-mobile-app/src/services/api.js</code> — qui expose les mêmes ressources avec les mêmes chemins. C'est la conséquence directe de la décision 1 du dossier : aucune règle métier n'est dupliquée côté client.</p>
+
+<h3>1.2 Les couches, du geste à la ligne SQL</h3>
+
+<pre><span class="c">// Exemple : le client coche une série pendant sa séance</span>
+SessionDetailScreen.js       toggleSet(exerciseId, setNumber, exercise)
+      ↓
+services/api.js              setCompletionsAPI.update({...})
+      ↓                      intercepteur : Authorization = Bearer &lt;JWT du cache mémoire&gt;
+      ↓
+PUT /api/set-completions     helmet → compression → cors → json → apiLimiter
+      ↓
+routes/setCompletions.js     authenticate → authorize('CLIENT','COACH')
+      ↓
+setCompletions.controller    canAccessExercise(userId, exerciseId)  →  403 sinon
+      ↓
+Prisma                       setCompletion.upsert({ where: { exerciseId_setNumber } })
+      ↓
+PostgreSQL                   INSERT … ON CONFLICT (exercise_id, set_number) DO UPDATE</pre>
+
+<div class="fig"><b>Chaîne complète</b> — Les six niveaux sont les mêmes pour les 133 endpoints. Retenir cet enchaînement permet de répondre à « que se passe-t-il quand… » sur n'importe quelle fonctionnalité, sans avoir mémorisé chaque écran.</div>
+
+<h3>1.3 Ordre exact des middlewares — <code>src/server.js</code></h3>
+
+<table>
+<tr><th style="width:8%">#</th><th style="width:26%">Middleware</th><th>Ce qu'il fait, et pourquoi il est à cette place</th></tr>
+<tr><td>1</td><td><code>app.set('trust proxy', 1)</code></td><td>Production seulement. Sans lui, <code>req.ip</code> vaut l'adresse du proxy Fly.io et le limiteur compte tous les visiteurs comme un seul client</td></tr>
+<tr><td>2</td><td><code>helmet()</code></td><td>En-têtes de sécurité. <code>crossOriginResourcePolicy: false</code> parce que <code>/uploads</code> sert des images consommées depuis l'origine du dashboard</td></tr>
+<tr><td>3</td><td><code>compression()</code></td><td>gzip sur toutes les réponses. Posé <strong>avant</strong> les routes, sinon il ne couvrirait rien. Gain mesuré : 7 934 → 2 186 octets sur une recherche d'exercices</td></tr>
+<tr><td>4</td><td><code>cors()</code></td><td>Origine <code>*</code> en développement, liste blanche <code>FRONTEND_URL</code> en production</td></tr>
+<tr><td>5</td><td><code>express.json({ limit: '10mb' })</code></td><td>Corps JSON. La limite haute existe pour les photos encodées</td></tr>
+<tr><td>6</td><td><code>express.static('uploads')</code></td><td>Pilote local du stockage de fichiers. En production, les fichiers vont dans Supabase Storage et ce dossier ne sert plus</td></tr>
+<tr><td>7</td><td><code>apiLimiter</code> sur <code>/api</code></td><td>Limiteur général. Le limiteur strict est posé route par route sur <code>/login</code> et <code>/register</code></td></tr>
+<tr><td>8</td><td>25 modules de routes</td><td><code>/api/auth</code> en premier, puis modération, puis le métier</td></tr>
+<tr><td>9</td><td><code>import './jobs/…'</code></td><td>Les trois tâches <code>node-cron</code> démarrent à l'import du serveur, dans le même processus</td></tr>
+</table>
+
+<h2><span class="num">2</span>Le socle commun aux deux parcours</h2>
+
+<h3>2.1 Authentification — les trois routes qui ouvrent tout</h3>
+
+<table>
+<tr><th style="width:24%">Route</th><th style="width:30%">Controller</th><th>Ce qui s'y joue</th></tr>
+<tr><td><code>POST /api/auth/register</code></td><td><code>authController.register</code> (l. 9)</td><td>Validation manuelle : champs requis, format d'email par expression régulière, mot de passe ≥ 6 caractères, <strong>rôle limité à COACH ou CLIENT</strong>. Unicité de l'email vérifiée avant écriture. Mot de passe haché par bcrypt (10 tours) puis <code>user.create</code></td></tr>
+<tr><td><code>POST /api/auth/login</code></td><td><code>authController.login</code> (l. 105)</td><td><code>findUnique({ where: { email } })</code> → <code>bcrypt.compare</code> → <code>generateToken({ userId, role })</code>. <strong>Même message d'erreur</strong> dans les deux cas d'échec</td></tr>
+<tr><td><code>GET /api/auth/me</code></td><td><code>authController.getMe</code> (l. 202)</td><td>Renvoie l'utilisateur <em>et son profil métier</em> — c'est ce que les deux clients appellent au démarrage pour savoir s'il faut passer par l'onboarding</td></tr>
+</table>
+
+<p><strong>Le jeton.</strong> <code>utils/jwt.js</code> ne fait que deux choses : <code>jwt.sign(payload, secret, { expiresIn })</code> et <code>jwt.verify</code>. La charge utile contient <code>userId</code> et <code>role</code> — rien d'autre, et surtout aucune donnée personnelle : un JWT n'est pas chiffré, seulement signé. Algorithme HS256, durée 30 jours, secret en variable d'environnement.</p>
+
+<div class="warn"><b>À savoir avant la question.</b> Il n'y a <strong>ni refresh token, ni liste de révocation</strong> : un jeton volé reste valable jusqu'à son échéance, et la déconnexion ne fait que l'effacer côté client. C'est écrit en 9.5 du dossier. La réponse à donner est le correctif : jeton d'accès court plus refresh token, ou liste de révocation en base.</div>
+
+<h3>2.2 Les deux middlewares d'accès — <code>src/middlewares/auth.js</code></h3>
+
+<pre><span class="c">// authenticate : charge l'utilisateur ET statue sur son statut de modération</span>
+const user = await chargerUtilisateur(req);        <span class="c">// Bearer → verifyToken → findUnique</span>
+if (!user) return sendError(res, 'Authentification requise', 401);
+
+if (user.status === 'SUSPENDED') {
+  const termeEchu = user.suspendedUntil &amp;&amp; new Date(user.suspendedUntil) &lt;= new Date();
+  if (termeEchu) { <span class="c">/* réactivation à la volée */</span> }
+  else return res.status(403).json({ moderation: { reason, until, appealEndpoint } });
+}
+req.user = user; next();</pre>
+
+<div class="fig"><b>Deux conséquences à retenir</b> — 1) <code>authenticate</code> fait <strong>une requête en base à chaque appel authentifié</strong> : il ne se contente pas de vérifier la signature. C'est le prix du statut de modération, et c'est ce que montre la figure 11 du dossier. 2) Une suspension échue est levée <strong>au premier accès</strong>, pas par une tâche planifiée qui balaierait la table.</div>
+
+<p><code>authorize(...roles)</code> est l'autre moitié : il ne connaît que <code>req.user.role</code> et renvoie 403 si le rôle n'est pas dans la liste. Une troisième porte existe, <code>authenticateEvenIfSuspended</code>, utilisée par <strong>une seule route</strong> — <code>POST /api/appeals</code> — pour qu'une sanction n'emporte pas le droit de la contester.</p>
+
+<h3>2.3 Autorisation par appartenance — <code>src/utils/authorization.js</code></h3>
+
+<p>Le rôle dit ce qu'on est, pas ce qu'on possède. Cinq fonctions centralisent la seconde couche, et chaque controller les appelle avant d'écrire :</p>
+
+<table>
+<tr><th style="width:30%">Fonction</th><th>Règle exacte</th></tr>
+<tr><td><code>resolveProfiles(userId)</code></td><td>Charge en parallèle le profil coach et le profil client. Un utilisateur n'a que l'un des deux</td></tr>
+<tr><td><code>canAccessClient(userId, clientId)</code></td><td>Vrai si c'est le client lui-même, <strong>ou</strong> un coach lié par une relation <code>ClientCoach</code> <code>isActive: true</code></td></tr>
+<tr><td><code>canAccessConversation(userId, coachId, clientId)</code></td><td>Vrai pour les deux participants, personne d'autre</td></tr>
+<tr><td><code>canAccessProgram(userId, programId)</code></td><td>Charge le programme, compare au profil coach propriétaire ou au profil client assigné</td></tr>
+<tr><td><code>canAccessSession</code> / <code>canAccessExercise</code></td><td>Remontent la chaîne <code>Exercise → Session → Program</code> pour retomber sur la règle précédente</td></tr>
+</table>
+
+<p>C'est cette couche qu'une campagne de tests a fait naître : <code>__tests__/authorization.test.js</code> construit deux écosystèmes complets et vérifie 18 refus et 11 accès légitimes. La distinction rôle / appartenance est l'étude de cas 17.2 du dossier.</p>
+
+<h3>2.4 Le jeton côté client — deux stockages, une seule logique</h3>
+
+<table>
+<tr><th style="width:18%">&nbsp;</th><th style="width:41%">Mobile — <code>services/api.js</code></th><th>Dashboard — <code>lib/api.ts</code></th></tr>
+<tr><td><strong>Stockage</strong></td><td><code>expo-secure-store</code> (trousseau iOS / Keystore Android), avec repli <code>localStorage</code> si <code>Platform.OS === 'web'</code></td><td><code>localStorage</code></td></tr>
+<tr><td><strong>Lecture</strong></td><td><strong>Cache mémoire</strong> <code>_tokenCache</code> : le trousseau n'est lu qu'une fois. Lire SecureStore en arrière-plan est interdit sur iOS</td><td><code>localStorage.getItem</code> à chaque requête, protégé par <code>typeof window !== "undefined"</code> — sans quoi le rendu serveur de Next.js planterait</td></tr>
+<tr><td><strong>Sur 401</strong></td><td>Purge le stockage, appelle un callback qui remet le contexte React à zéro. Un drapeau <code>_unauthorizedHandled</code> évite dix déconnexions pour dix requêtes parallèles</td><td>Purge puis <code>window.location.href = "/login"</code>, sauf sur <code>/auth/login</code> et <code>/auth/register</code> — sinon un mot de passe faux provoquerait une redirection au lieu d'un message</td></tr>
+<tr><td><strong>Délai maximal</strong></td><td><code>timeout: 15000</code> — une API injoignable doit échouer explicitement plutôt que laisser un écran en chargement sans fin</td><td>Aucun délai configuré</td></tr>
+</table>
+
+<div class="decision">
+<h4>L'ordre de la déconnexion, et pourquoi il compte</h4>
+<p>Côté mobile, <code>logout()</code> appelle <code>setTokenCache(null)</code> <strong>avant</strong> de purger le trousseau. L'inverse laisserait une fenêtre pendant laquelle une requête concurrente lirait encore le jeton du compte précédent depuis la mémoire — et l'enverrait au serveur. C'est un bug de session croisée en puissance, évité par deux lignes dans le bon ordre.</p>
+</div>
+
+<h3>2.5 Le contrat de réponse</h3>
+
+<pre><span class="c">// Succès — utils/responseHandler.js</span>
+{ success: true,  message: "Opération réussie", data: { … } }
+<span class="c">// Erreur</span>
+{ success: false, message: "Description de l'erreur", errors: null }</pre>
+
+<p>Les deux clients lisent donc toujours <code>response.data.data</code>. C'est ce qui permet aux intercepteurs de traiter les erreurs de façon uniforme, et c'est aussi ce qui explique cette double indirection qu'un examinateur peut relever dans le code des écrans.</p>
+
+<h2><span class="num">3</span>Parcours coach — étape par étape</h2>
+
+<h3>3.1 Inscription puis onboarding</h3>
+
+<table>
+<tr><th style="width:16%">Niveau</th><th>Détail</th></tr>
+<tr><td><strong>Écran</strong></td><td><code>app/(auth)/register/page.tsx</code> — formulaire avec choix du rôle</td></tr>
+<tr><td><strong>Appel</strong></td><td><code>authAPI.register({ email, password, firstName, lastName, role: 'COACH' })</code></td></tr>
+<tr><td><strong>Route</strong></td><td><code>POST /api/auth/register</code> — <code>authLimiter</code> puis controller, <strong>sans</strong> <code>authenticate</code></td></tr>
+<tr><td><strong>Controller</strong></td><td>Crée le <code>User</code> avec le mot de passe haché, renvoie <code>{ user, token }</code></td></tr>
+<tr><td><strong>Données</strong></td><td>Table <code>users</code> uniquement. <strong>Aucun profil métier n'existe encore</strong> — c'est ce qui rend l'onboarding obligatoire</td></tr>
+</table>
+
+<p>Le contexte React stocke le jeton, puis la navigation constate l'absence de <code>coachProfile</code> et envoie vers <code>/coach/onboarding</code>. L'écran soumet <code>onboardingAPI.submitCoach(payload)</code> → <code>PUT /api/coaches/onboarding</code>, qui crée le <code>CoachProfile</code> (bio, spécialités, ville, lieux d'entraînement).</p>
+
+<div class="warn"><b>Le piège du contexte périmé</b> — c'est l'étude de cas 17.4 du dossier. À la première connexion, l'objet utilisateur en mémoire n'a pas de profil ; après l'onboarding, la base en a un mais le contexte l'ignore encore, et toute logique de navigation renvoie l'utilisateur à l'onboarding. La solution est <code>refreshUser()</code> : on redemande <code>GET /auth/me</code> et <strong>le serveur fait autorité</strong>, plutôt que de reconstruire l'objet localement.</div>
+
+<h3>3.2 Tableau de bord — trois appels en parallèle</h3>
+
+<pre><span class="c">// app/(dashboard)/coach/dashboard/page.tsx</span>
+const [programmes, clients, rdv] = await Promise.all([
+  programsAPI.getCoachPrograms(),      <span class="c">// GET /api/programs/coach</span>
+  clientsAPI.getCoachClients(),        <span class="c">// GET /api/clients/coach</span>
+  appointmentsAPI.getUpcoming(),       <span class="c">// GET /api/appointments/upcoming</span>
+]);</pre>
+
+<p><code>Promise.all</code> et non trois <code>await</code> successifs : les trois requêtes sont indépendantes, les enchaîner tripleraient la latence perçue. Les indicateurs de tête (clients, programmes actifs, messages non lus, taux de complétion) sont calculés <strong>côté client</strong> à partir de ces trois réponses — il n'y a pas d'endpoint de synthèse.</p>
+
+<p><code>getCoachClients</code> (<code>clients.controller.js</code> l. 6) part du <code>CoachProfile</code> de l'appelant, puis lit la table de liaison <code>ClientCoach</code> avec <code>isActive: true</code>. C'est le point qui a fait tomber l'écran Analytics : deux endpoints de la même page lisaient deux sources différentes du même lien.</p>
+
+<h3>3.3 Accepter une demande — la seule transaction du parcours coach</h3>
+
+<pre><span class="c">// requests.controller.js — acceptRequest (l. 192)</span>
+const existingCoaches = await prisma.clientCoach.findMany({
+  where: { clientId: request.clientId, isActive: true },
+});
+const isPrimary = existingCoaches.length === 0;   <span class="c">// premier coach = référent</span>
+
+await prisma.$transaction([
+  prisma.coachRequest.update({ where: { id: requestId }, data: { status: 'accepted' } }),
+  prisma.clientCoach.upsert({ where: { clientId_coachId: { … } }, … }),
+  ...(isPrimary ? [prisma.clientProfile.update({ data: { coachId: coachProfile.id } })] : []),
+]);</pre>
+
+<div class="fig"><b>Trois choses à savoir défendre ici.</b> 1) L'<code>upsert</code> plutôt qu'un <code>create</code> : une relation désactivée puis réacceptée se réactive, sans violer la contrainte d'unicité <code>@@unique([clientId, coachId])</code>. 2) Le premier coach devient automatiquement référent. 3) La troisième écriture alimente encore <code>clientProfile.coachId</code>, le champ hérité de l'ancien modèle un-coach — voir l'écart n° 4 en partie 9.</div>
+
+<h3>3.4 Créer un programme, puis son calendrier</h3>
+
+<table>
+<tr><th style="width:30%">Étape</th><th>Route et effet</th></tr>
+<tr><td>Nouveau programme<br><code>coach/clients/[clientId]/program/new</code></td><td><code>POST /api/programs</code> — vérifie que le client est bien lié au coach, crée <code>Program</code> (titre, description, durée, <code>isActive</code>)</td></tr>
+<tr><td>Calendrier<br><code>coach/programs/[programId]/calendar</code></td><td><code>GET /api/sessions/program/:programId</code> — liste les séances datées ; le calendrier place une carte par jour et ouvre l'éditeur au clic</td></tr>
+</table>
+
+<h3>3.5 L'éditeur de séance — le cœur de l'interface coach</h3>
+
+<p>Le fichier de page ne fait que dix lignes : il délègue à <code>app/(dashboard)/coach/programs/[programId]/sessions/_components/session-editor.tsx</code>, 1 033 lignes, partagé entre la création et l'édition.</p>
+
+<pre><span class="c">// Capteurs : souris ET clavier — c'est ce qui rend le glisser-déposer accessible</span>
+const sensors = useSensors(
+  useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+);
+
+const handleDragEnd = (event: DragEndEvent) =&gt; {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
+  setExercises((prev) =&gt; arrayMove(prev, oldIndex, newIndex));   <span class="c">// état local</span>
+};</pre>
+
+<table>
+<tr><th style="width:28%">Point technique</th><th>Ce qu'il faut pouvoir expliquer</th></tr>
+<tr><td><code>activationConstraint: { distance: 5 }</code></td><td>Un déplacement ne démarre qu'après 5 pixels. Sans ce seuil, un simple clic sur une carte serait interprété comme un début de glissement et les champs deviendraient difficiles à cliquer</td></tr>
+<tr><td><code>KeyboardSensor</code></td><td>Le réordonnancement est opérable au clavier. C'est mesuré en 11.4 du dossier — et c'était donné pour « non vérifié » dans une version antérieure</td></tr>
+<tr><td>Ordre = index du tableau</td><td>Le champ <code>order</code> n'est pas manipulé pendant le glissement : il est recalculé à l'enregistrement, <code>order: i</code> sur la position finale. Moins d'états à synchroniser</td></tr>
+<tr><td>Rien n'est persisté au glissement</td><td>Le coach essaie plusieurs agencements sans une seule requête réseau. La sauvegarde est explicite : <em>Brouillon</em> (<code>DRAFT</code>) ou <em>Enregistrer</em> (<code>DONE</code>)</td></tr>
+<tr><td>Validation avant envoi</td><td><code>isValidReps</code> refuse les répétitions non numériques et liste les exercices fautifs par leur position : « Exercice 3 (Burpees) : « douze » ». Un message qui désigne la ligne vaut mieux qu'un refus global</td></tr>
+</table>
+
+<h4>Ce que fait le serveur à l'enregistrement</h4>
+
+<pre><span class="c">// sessionController.js — upsertSession (l. 8)</span>
+<span class="c">// 1. le coach est-il propriétaire du programme ?</span>
+if (program.coachId !== coachProfile.id) return sendError(res, 'Accès non autorisé…', 403);
+
+<span class="c">// 2. la séance existe-t-elle ? par id, sinon par la clé (programId, date)</span>
+existingSession = id ? findUnique({ where: { id } })
+                     : findUnique({ where: { programId_date: { programId, date } } });
+
+<span class="c">// 3. mise à jour : les exercices sont REMPLACÉS</span>
+await prisma.exercise.deleteMany({ where: { sessionId: session.id } });
+if (exercises.length &gt; 0) await prisma.exercise.createMany({ data: … });</pre>
+
+<div class="warn"><b>Deux conséquences que je préfère connaître avant qu'on me les demande.</b><br>
+<strong>a) Les performances du client sont perdues.</strong> <code>SetCompletion</code> est en <code>onDelete: Cascade</code> sur <code>Exercise</code> : supprimer les exercices efface les séries déjà validées. Si le coach modifie une séance que le client a commencée, le réalisé disparaît. Correctif : réconcilier les exercices par identifiant au lieu de tout remplacer.<br>
+<strong>b) Ce n'est pas atomique.</strong> Le <code>deleteMany</code> puis <code>createMany</code> ne sont pas dans un <code>$transaction</code> — un échec entre les deux laisse une séance sans exercices. Le projet sait le faire ailleurs : les rendez-vous, la modération et les disponibilités utilisent <code>prisma.$transaction</code>. C'est un oubli, pas un choix.</div>
+
+<p><strong>La clé composite <code>(programId, date)</code></strong> est l'autre pièce à connaître : elle rend l'enregistrement idempotent. Deux envois du même formulaire sans identifiant ne créent pas deux séances le même jour — c'est la contrainte <code>@@unique([programId, date])</code> qui l'interdit, et l'<code>upsert</code> qui l'exploite.</p>
+
+<h3>3.6 Agenda et rendez-vous — le morceau le plus dense du back</h3>
+
+<h4>Détection de conflit</h4>
+
+<pre><span class="c">// appointment.controller.js — checkConflict (l. 12)</span>
+const conflict = await prisma.appointment.findFirst({
+  where: {
+    status: 'CONFIRMED',
+    OR: [{ coachId }, ...(clientId ? [{ clientId }] : [])],
+    startAt: { lt: endAt },     <span class="c">// le test de chevauchement standard :</span>
+    endAt:   { gt: startAt },   <span class="c">// A commence avant la fin de B ET finit après le début de B</span>
+  },
+});</pre>
+
+<p>Deux inégalités suffisent à détecter tout chevauchement, dans les deux sens. Seuls les rendez-vous <code>CONFIRMED</code> bloquent : une proposition en attente ne réserve pas le créneau — c'est un choix, et il se défend (sinon une proposition jamais traitée gèlerait l'agenda).</p>
+
+<h4>Le 409 n'est pas une fin de non-recevoir</h4>
+
+<table>
+<tr><th style="width:20%">Cas</th><th>Réponse du serveur</th></tr>
+<tr><td>Conflit, sans résolution demandée</td><td><strong>409</strong> avec le détail du RDV en conflit (id, titre, début, fin, durée) — le front peut alors proposer un choix à l'utilisateur au lieu d'afficher « échec »</td></tr>
+<tr><td><code>resolution: 'replace'</code></td><td>Supprime le RDV existant, et ses occurrences filles si c'était une série</td></tr>
+<tr><td><code>resolution: 'shorten'</code></td><td>Raccourcit celui des deux qui commence le premier, et recalcule <code>durationMinutes</code></td></tr>
+</table>
+
+<h4>Récurrence : RRULE, et une transaction à trois écritures</h4>
+
+<pre><span class="c">// Occurrences générées à la création, bornées à un an</span>
+const rule = new RRule({ ...RRule.parseString(rruleStr), dtstart: startDate });
+const dates = rule.all((date) =&gt; date &lt;= oneYearLater);
+
+await prisma.$transaction(async (tx) =&gt; {
+  const root = await tx.appointment.create({ data: { …, rrule } });          <span class="c">// la racine</span>
+  await tx.appointment.createMany({ data: dates.map(… parentId: root.id) }); <span class="c">// les occurrences</span>
+  const proposal = await tx.message.create({ data: { type: 'APPOINTMENT_PROPOSAL', … } });
+});</pre>
+
+<p><strong>Les occurrences sont matérialisées en base</strong>, pas calculées à la lecture. Avantage : une occurrence peut être annulée ou déplacée individuellement, et l'agenda se lit par une simple requête de plage. Coût : un an de récurrence hebdomadaire crée 52 lignes, et changer la règle exige de régénérer. Le format <code>RRULE</code> (RFC 5545) est le même que celui des agendas du marché — les récurrences restent interopérables.</p>
+
+<p>Les clients, eux, ne peuvent pas créer de série : <code>if (rrule) return sendError(res, 'Les clients ne peuvent pas créer de RDV récurrents', 403)</code>. Et un client bloqué par le coach (<code>CoachClientBlock</code>) ne peut rien proposer.</p>
+
+<h4>Confirmer : la règle relationnelle</h4>
+
+<p>C'est l'étude de cas 17.2, et le code est explicite : le coach ne peut confirmer que ce que le client a proposé, et réciproquement. L'information « qui a proposé » n'est pas sur le rendez-vous mais sur le <strong>message lié</strong>, via <code>message.isSentByCoach</code> — d'où l'impossibilité de trancher la règle dans un middleware, qui ne connaît que le rôle et le jeton.</p>
+
+<div class="warn"><b>Le seul test manquant du projet est ici.</b> Cette règle est vérifiée à la main sur les quatre combinaisons, pas par un test automatisé. C'est le marqueur <code>[À COMPLÉTER]</code> de 13.4, et la dette que je citerais moi-même si on me demandait ce que je referais autrement.</div>
+
+<h3>3.7 Messagerie coach</h3>
+
+<table>
+<tr><th style="width:26%">Mécanisme</th><th>Implémentation</th></tr>
+<tr><td>Rafraîchissement</td><td><code>setInterval(fetchMessages, 3000)</code> dans <code>coach/messages/page.tsx</code> (l. 264) — <strong>uniquement quand une conversation est ouverte</strong>, et l'intervalle est nettoyé au démontage</td></tr>
+<tr><td>Compteur non lus</td><td><code>components/layout/sidebar.tsx</code> l. 127 : rafraîchi toutes les 10 secondes côté dashboard</td></tr>
+<tr><td>Isolation</td><td><code>canAccessConversation(userId, coachId, clientId)</code> — une conversation n'appartient qu'à ses deux participants</td></tr>
+<tr><td>Types de message</td><td><code>CHAT</code>, <code>TIP</code> (conseil, affichage distinct), <code>APPOINTMENT_PROPOSAL</code> (lié 1-1 à un rendez-vous)</td></tr>
+</table>
+
+<p><strong>Le polling est le point faible assumé du produit</strong> : une conversation ouverte dix minutes émet 200 requêtes dont la quasi-totalité ne renvoie rien. C'est le gisement principal de la partie 12 du dossier et la deuxième évolution prioritaire. La réponse à préparer : WebSocket ou SSE, et pourquoi ça n'a pas été fait — un canal persistant demande un serveur qui garde l'état des connexions, ce qui change la nature du déploiement.</p>
+
+<h3>3.8 Analytics — quatre calculs à savoir défendre</h3>
+
+<table>
+<tr><th style="width:24%">Endpoint</th><th style="width:30%">Calcul</th><th>Le détail qui compte</th></tr>
+<tr><td><code>GET /analytics/workout/volume</code></td><td>Volume = <strong>poids × répétitions</strong>, cumulé par semaine ISO et par groupe musculaire</td><td>Le volume d'un exercice est attribué <strong>en entier à chacun</strong> de ses <code>bodyParts</code> : un développé couché compte à 100 % pour les pectoraux <em>et</em> pour les épaules. Simplification assumée — pondérer demanderait un modèle de contribution musculaire</td></tr>
+<tr><td><code>GET /analytics/workout/estimated-1rm</code></td><td><strong>Brzycki</strong> si répétitions ≤ 10, <strong>Epley</strong> au-delà, arrondi à 0,5 kg</td><td>Le dossier et le cahier des charges annoncent « formule d'Epley » : c'est incomplet, il y a deux formules et un seuil. Brzycki est plus juste sur les faibles répétitions, Epley ne s'effondre pas sur les séries longues</td></tr>
+<tr><td><code>GET /analytics/workout/completion</code></td><td>Taux de complétion et série de séances consécutives</td><td>Ne compte que les séances réellement validées par le client</td></tr>
+<tr><td>INOL, standards de force, repères de volume</td><td><code>utils/strengthStandards.js</code>, <code>utils/volumeLandmarks.js</code></td><td>Trois endpoints supplémentaires, alimentés par des tables de référence — c'est ce qui donne du sens aux chiffres bruts</td></tr>
+</table>
+
+<div class="decision">
+<h4>Pourquoi les données réelles sont des chaînes de caractères, et ce que ça coûte</h4>
+<p><code>SetCompletion.repsAchieved</code> et <code>weightUsed</code> sont des <code>String?</code> : en salle, un client écrit « 12-15 », « AMRAP », « 80kg », « échec ». Un champ numérique aurait refusé la saisie ou perdu l'information.</p>
+<p>Le prix est payé au moment du calcul, dans <code>utils/parseSetData.js</code> : <code>parseNumericField</code> gère les plages (« 12-15 » → 15 par défaut, stratégie <code>high</code>/<code>low</code>/<code>avg</code>), les unités (« 80kg », « 100lbs »), les valeurs non numériques (→ <code>null</code>, la série est ignorée du calcul). <strong>42 tests unitaires</strong> couvrent cette seule fonction — c'est la suite la plus dense du projet, et c'est justifié : elle est en amont de tous les indicateurs.</p>
+<p>Et un champ séparé, <code>durationAchieved</code>, existe précisément pour que les 45 secondes d'un gainage ne soient jamais comptées comme 45 répétitions. Le mobile applique la même exclusivité à l'envoi : <code>repsAchieved: chronometre ? undefined : repsAchieved</code>.</p>
+</div>
+
+<div class="part">
+<h2><span class="num">4</span>Parcours client — étape par étape</h2>
+
+<p>Le parcours client vit sur le mobile. Le dashboard en propose une version allégée (<code>app/(dashboard)/client/…</code>), mais c'est l'application Expo qui porte la promesse produit : saisir ses séries pendant l'effort, une main occupée.</p>
+
+<h3>4.1 Inscription et onboarding en trois étapes</h3>
+
+<table>
+<tr><th style="width:26%">Écran</th><th>Ce qui est demandé, et ce qui part au serveur</th></tr>
+<tr><td><code>RegisterScreen.js</code></td><td>Email, mot de passe, nom, prénom, rôle <code>CLIENT</code> → <code>POST /api/auth/register</code></td></tr>
+<tr><td><code>onboarding/client/Step1Physical.js</code></td><td>Genre, âge, taille, poids</td></tr>
+<tr><td><code>Step2Location.js</code></td><td>Ville, salle de sport (recherche dans <code>gyms</code>)</td></tr>
+<tr><td><code>Step3Goal.js</code></td><td>Objectif et niveau</td></tr>
+<tr><td><code>ClientOnboardingScreen.js</code></td><td>Assemble les trois étapes et soumet en une fois → <code>PUT /api/clients/onboarding</code> → <code>submitClientOnboarding</code> crée le <code>ClientProfile</code></td></tr>
+</table>
+
+<p><code>StepProgress.js</code> matérialise l'avancement. Le parcours est obligatoire mais un mode « passer » existe (exigence F1.5) : le profil peut être complété plus tard, au prix d'un dashboard sans recommandations.</p>
+
+<h3>4.2 Trouver un coach et envoyer une demande</h3>
+
+<pre><span class="c">// CoachSearchScreen.js → GET /api/coaches?city=…</span>
+<span class="c">// coaches.controller : ne renvoie que les profils visibleInSearch, et un select explicite</span>
+include: {
+  user: { select: { firstName: true, lastName: true } },   <span class="c">// email volontairement exclu</span>
+  reviews: { select: { rating: true } },
+}</pre>
+
+<p>C'est l'extrait 4 du dossier, et l'argument de sécurité à retenir : <strong>l'email ne fuite pas dans une réponse publique</strong> parce que le <code>select</code> est explicite, pas parce qu'on a pensé à le retirer après coup.</p>
+
+<p>Puis <code>CoachDetailScreen.js</code> → <code>requestsAPI.create({ coachId, message })</code> → <code>POST /api/requests</code>. Le message d'accompagnement est <strong>obligatoire</strong> (F16.2), un doublon en attente est refusé (F16.6), et le refus conserve la demande au statut <code>rejected</code> pour l'audit (F16.5).</p>
+
+<h3>4.3 L'accueil mobile — <code>DashboardScreen.js</code>, 1 421 lignes</h3>
+
+<h4>Ce qui se charge, et dans quel ordre</h4>
+
+<pre><span class="c">// Au montage : deux appels en parallèle</span>
+const [programsRes, meRes] = await Promise.all([
+  programsAPI.getClientPrograms(),   <span class="c">// GET /api/programs/client — programmes + séances + exercices</span>
+  authAPI.getMe(),                   <span class="c">// pour récupérer clientProfile.id</span>
+]);
+<span class="c">// puis, seulement si le client n'a aucun coach :</span>
+if (!hasCoach) await onboardingAPI.getRecommendedCoaches();
+
+<span class="c">// À chaque changement de date sélectionnée : deux appels ciblés</span>
+useEffect(() =&gt; { loadStats(); loadMeals(); }, [date, clientId]);</pre>
+
+<p><strong>Un seul appel ramène tout l'entraînement.</strong> <code>GET /api/programs/client</code> renvoie les programmes avec leurs séances <em>et</em> leurs exercices imbriqués ; la frise de dates n'émet donc aucune requête quand on change de jour pour l'entraînement. Le suivi quotidien et les repas, eux, sont datés : ils se rechargent par jour.</p>
+
+<h4>La séance du jour est choisie côté client</h4>
+
+<pre>const getActiveProgram = () =&gt; programs.filter(p =&gt; p.isActive)
+  .sort((a, b) =&gt; new Date(b.createdAt) - new Date(a.createdAt))[0] || null;
+
+const getSessionForDate = (dateStr) =&gt; (getActiveProgram()?.sessions || [])
+  .find(s =&gt; format(new Date(s.date), 'yyyy-MM-dd') === dateStr) || null;</pre>
+
+<div class="fig"><b>Deux décisions visibles dans quatre lignes.</b> S'il existe plusieurs programmes actifs — cas réel du multi-coach — c'est <strong>le plus récent</strong> qui s'affiche : un choix arbitraire mais déterministe, préférable à un écran vide. Et la comparaison se fait sur une date <em>formatée en heure locale</em>, pas sur les objets <code>Date</code> : comparer des instants ferait basculer la séance d'un jour selon le fuseau.</div>
+
+<h4>L'enregistrement automatique du suivi — le détail que je citerais spontanément</h4>
+
+<pre><span class="c">// Enregistrement 900 ms après la dernière frappe</span>
+useEffect(() =&gt; {
+  if (vientDuServeur.current) { vientDuServeur.current = false; return; }
+  if (minuterieRef.current) clearTimeout(minuterieRef.current);
+  minuterieRef.current = setTimeout(enregistrerStats, 900);
+  return () =&gt; clearTimeout(minuterieRef.current);
+}, [formData, clientId, date]);</pre>
+
+<table>
+<tr><th style="width:34%">Garde-fou</th><th>Le problème qu'il évite</th></tr>
+<tr><td>Temporisation de 900 ms</td><td>Sans elle, chaque caractère du champ de notes part en requête — et deux réponses arrivées dans le désordre écrasent la plus récente</td></tr>
+<tr><td><code>vientDuServeur</code> (<code>useRef</code>)</td><td>Le formulaire vient d'être peuplé par le serveur : sans ce drapeau, l'enregistrement automatique se déclencherait au chargement et réécrirait les données avec ce qu'il vient de lire. Un <code>useRef</code> et non un <code>useState</code> : changer ce drapeau ne doit pas provoquer de rendu</td></tr>
+<tr><td><code>setFormData(prev =&gt; …)</code></td><td>Forme fonctionnelle obligatoire : deux frappes rapprochées liraient sinon le même état périmé et la première serait perdue</td></tr>
+</table>
+
+<p>Le tout finit sur <code>POST /api/stats</code> → <code>statController</code>, un <strong>upsert par (clientId, date)</strong> : la journée est une ligne unique qu'on met à jour, pas un historique d'événements.</p>
+
+<h3>4.4 Le détail de séance — <code>SessionDetailScreen.js</code>, 1 053 lignes</h3>
+
+<p>C'est l'écran le plus dense du produit et celui qu'il faut connaître par cœur : il porte la promesse de FitFlow.</p>
+
+<h4>a) Valider une série</h4>
+
+<pre><span class="c">// toggleSet (l. 261) — un basculement, deux directions</span>
+if (isCompleted) {
+  await setCompletionsAPI.delete(exerciseId, setNumber);      <span class="c">// DELETE → décocher</span>
+} else {
+  const chronometre = estChronometre(exercise);
+  await setCompletionsAPI.update({
+    exerciseId, setNumber,
+    repsAchieved:     chronometre ? undefined : repsAchieved,   <span class="c">// exclusifs :</span>
+    durationAchieved: chronometre ? durationAchieved : undefined, <span class="c">// jamais les deux</span>
+    weightUsed:       chronometre ? undefined : weightUsed,
+    rpe: rpe || undefined,
+  });
+  if (restTimerEnabled &amp;&amp; exercise.restTime) startRestTimer(parseRestTime(exercise.restTime));
+}</pre>
+
+<p>Les valeurs par défaut sont <strong>les valeurs prescrites</strong> : cocher sans rien modifier enregistre ce que le coach avait prévu. C'est ce qui rend la validation possible en une tape, et c'est aussi ce qui distingue le prévu du réalisé : <code>Exercise</code> porte la prescription, <code>SetCompletion</code> la performance.</p>
+
+<p>Côté serveur, <code>updateSetCompletion</code> est un <strong>upsert sur la clé composite <code>(exerciseId, setNumber)</code></strong> : corriger une charge met la ligne à jour au lieu d'en créer une seconde. C'est l'extrait 5 du dossier, et la contrainte <code>@@unique</code> qui le permet.</p>
+
+<h4>b) Le chronomètre de repos, et la fonction qui l'a réparé</h4>
+
+<pre><span class="c">// parseRestTime — le champ restTime est libre, et plusieurs écritures coexistent en base</span>
+'1:30'      → 90     <span class="c">// minutes:secondes</span>
+'1min30'    → 90     <span class="c">// avec unité, secondes optionnelles</span>
+'2min'      → 120
+'90s' / '90'→ 90     <span class="c">// un nombre nu se lit en secondes</span></pre>
+
+<div class="decision">
+<h4>Pourquoi cette fonction existe — l'histoire à raconter</h4>
+<p>L'implémentation précédente ne lisait que le format <code>m:ss</code> et renvoyait <code>0</code> pour tout le reste — c'est-à-dire <strong>pour la totalité des valeurs réellement enregistrées</strong>. Résultat : le chronomètre de repos ne démarrait jamais, et la cause n'était pas dans le chronomètre mais dans la lecture de son entrée.</p>
+<p>C'est un exemple concret de dette de conception : un champ texte libre côté coach oblige à une tolérance côté client. L'alternative — contraindre la saisie à un format unique — se défend aussi, mais aurait rejeté les données existantes.</p>
+</div>
+
+<p>Deux chronomètres cohabitent, et il faut ne pas les confondre : le <strong>chrono de séance</strong> (<code>elapsedSeconds</code>, avec pause et reprise, visible en haut de l'écran) et le <strong>chrono de repos</strong> (<code>restSecondsLeft</code>, compte à rebours avec barre de progression et bouton « Passer », qui remplace la barre du premier pendant le repos). Le repos utilise un <strong>horodatage absolu de fin</strong> (<code>restEndTimeRef</code>) et non un décompte : une application mise en arrière-plan puis rouverte retrouve le temps juste, ce qu'un compteur décrémenté aurait perdu. Une notification locale (<code>expo-notifications</code>) annonce « Repos terminé ! 💪 ».</p>
+
+<h4>c) La fin de séance n'est pas automatique — et il faut le dire ainsi</h4>
+
+<pre><span class="c">// Le pied d'écran est piloté par un booléen calculé côté client</span>
+&lt;Text&gt;{completed} / {total} séries terminées&lt;/Text&gt;
+&lt;TouchableOpacity disabled={!allCompleted}&gt;
+  {allCompleted ? 'Valider la séance' : 'Complétez toutes les séries'}
+&lt;/TouchableOpacity&gt;
+
+<span class="c">// Puis, sur confirmation explicite :</span>
+await sessionsAPI.validateSession(sessionId, durationSeconds);   <span class="c">// PUT /sessions/:id/validate</span></pre>
+
+<div class="warn"><b>Écart avec le dossier, à connaître absolument.</b> Le dossier (8.5) et le cahier des charges (F5.4) annoncent que « la séance se marque automatiquement comme <code>DONE</code> quand tous les sets sont complétés », et l'extrait 10 montre un calcul <code>allCompleted</code> côté serveur. <strong>Ce calcul n'existe pas dans le backend</strong> : <code>grep "status: 'DONE'"</code> ne renvoie qu'une seule occurrence, dans <code>validateSession</code>, appelée par le client.<br>
+<strong>Ce qu'il faut répondre :</strong> le mécanisme est réel mais son siège est le mobile — l'interface compte les séries, déverrouille le bouton et demande une confirmation. La formulation juste est « la séance se clôt sans que le coach n'ait rien à faire », pas « le serveur la clôt tout seul ». Et le choix se défend : une validation explicite évite de clore une séance qu'un client aurait cochée par erreur, et c'est elle qui transporte la durée réelle mesurée par le chrono.</div>
+
+<h3>4.5 Nutrition</h3>
+
+<table>
+<tr><th style="width:30%">Geste</th><th>Chaîne</th></tr>
+<tr><td>Chercher un aliment</td><td><code>FoodSearch.js</code> → <code>GET /api/food/search?q=…</code> → table <code>CiqualFood</code> (référentiel ANSES, alimenté par <code>scripts/seed-ciqual.js</code>)</td></tr>
+<tr><td>Enregistrer un repas</td><td><code>mealsAPI.create</code> → <code>POST /api/meals</code> — catégorie (petit-déjeuner, déjeuner, dîner, collation) et aliments</td></tr>
+<tr><td>Voir ses macros</td><td>Calcul des calories, protéines, glucides et lipides par repas et par jour</td></tr>
+<tr><td>Calculer ses besoins</td><td><code>CalorieCalculator.js</code> → <code>POST /api/nutrition/calculate</code> — à partir du poids, de la taille, de l'âge, du niveau d'activité et de l'objectif</td></tr>
+</table>
+
+<p>L'argument de conception : le référentiel est une <strong>table de référence officielle</strong> plutôt qu'une base saisie à la main. C'est une conséquence directe de la veille (16.2), et ça évite d'avoir à défendre la fiabilité de valeurs nutritionnelles inventées.</p>
+
+<h3>4.6 Agenda, messagerie et notifications côté client</h3>
+
+<table>
+<tr><th style="width:24%">Écran</th><th>Mécanisme</th></tr>
+<tr><td><code>AppointmentsScreen.js</code></td><td>Liste et confirmation des propositions. Les sélecteurs de date et d'heure sont <strong>natifs</strong> (<code>@react-native-community/datetimepicker</code>) — un argument concret pour la décision 2 : une web-app n'y a pas accès</td></tr>
+<tr><td><code>MessagesScreen.js</code></td><td><code>setInterval(fetchMessages, 3000)</code> (l. 186), uniquement conversation ouverte. Marquage « lu » à l'ouverture</td></tr>
+<tr><td><code>NotificationsBell.js</code></td><td><code>POLL_INTERVAL = 30000</code> (l. 17) → <code>GET /api/notifications/unread-count</code>. Badge plafonné à « 99+ ». Panneau en bottom-sheet, marquage individuel ou global</td></tr>
+<tr><td>Onglet Messages</td><td><code>AppNavigator.js</code> tient un second compteur, rafraîchi toutes les 30 s et à chaque retour sur l'onglet</td></tr>
+</table>
+
+<h4>L'endpoint le plus sollicité de l'API, et son cache</h4>
+
+<pre><span class="c">// notification.controller.js — getUnreadCount (l. 29)</span>
+const cached = await getCachedUnreadCount(userId);
+if (cached !== null) return sendSuccess(res, { count: cached, cached: true });
+
+const count = await prisma.notification.count({ where: { userId, isRead: false } });
+await setCachedUnreadCount(userId, count);
+sendSuccess(res, { count, cached: false });</pre>
+
+<p>Trois choses à savoir défendre : le champ <code>cached</code> est renvoyé <strong>exprès</strong>, pour rendre le mécanisme observable en démonstration ; l'invalidation se fait à l'écriture (<code>markAsRead</code> supprime la clé plutôt que de la recalculer) ; et si Redis est absent, <code>getRedis()</code> renvoie <code>null</code>, toutes les opérations de cache deviennent des non-opérations et l'application continue en interrogeant PostgreSQL. <strong>Redis n'est pas déployé en production</strong> — décision assumée après la correction de latence de 14.5.</p>
+
+<h2><span class="num">5</span>Le mobile porte aussi un parcours coach</h2>
+
+<div class="warn"><b>Fait non documenté dans le dossier.</b> Le dossier présente l'application mobile comme « client uniquement » (6.2, figures 10 et 14). <strong>C'est faux.</strong> <code>AppNavigator.js</code> branche sur le rôle : <code>user.role === 'COACH' ? &lt;CoachTabs /&gt; : &lt;MainTabs /&gt;</code>, et onze écrans coach existent sous <code>src/screens/coach/</code>.</div>
+
+<table>
+<tr><th style="width:34%">Écran mobile coach</th><th>Ce qu'il permet</th></tr>
+<tr><td><code>CoachDashboardScreen.js</code></td><td>Vue d'ensemble du portefeuille</td></tr>
+<tr><td><code>CoachClientsScreen.js</code> / <code>CoachClientDetailScreen.js</code></td><td>Liste des clients et fiche détaillée</td></tr>
+<tr><td><code>CoachNewProgramScreen.js</code></td><td>Création d'un programme</td></tr>
+<tr><td><code>CoachProgramCalendarScreen.js</code></td><td>Calendrier du programme</td></tr>
+<tr><td><code>CoachSessionEditorScreen.js</code> (1 431 lignes)</td><td>Édition d'une séance — la plus grosse vue mobile</td></tr>
+<tr><td><code>CoachSessionFillScreen.js</code></td><td>Remplir une séance <em>à la place</em> du client, et la valider</td></tr>
+<tr><td><code>CoachTemplatesScreen.js</code>, <code>CoachMessagesScreen.js</code>, <code>CoachProfileScreen.js</code>, <code>EditCoachProfileScreen.js</code></td><td>Templates, messagerie, profil</td></tr>
+</table>
+
+<div class="decision">
+<h4>Comment le présenter sans se contredire</h4>
+<p>Deux réponses honnêtes, à choisir selon la question :</p>
+<p><strong>Si on demande la cible produit :</strong> « Le mobile est <em>conçu</em> pour le client — c'est là qu'est la valeur, en salle. Un côté coach existe dans le code, mais il n'est pas la voie recommandée : le coach travaille sur le dashboard, parce que construire un programme sur plusieurs semaines demande un grand écran. »</p>
+<p><strong>Si on ouvre le dépôt et qu'on voit les onze écrans :</strong> le reconnaître immédiatement et expliquer la genèse — le dépôt s'appelle <code>coach-mobile-app</code>, le projet a d'abord visé le coach sur mobile, puis la contrainte d'usage a inversé la priorité. Les écrans coach sont restés, fonctionnels ; le dossier a décrit la cible et non l'état du code. <strong>C'est une inexactitude du dossier, pas une invention du code.</strong></p>
+</div>
+
+<h2><span class="num">6</span>Les technologies, une par une</h2>
+
+<table>
+<tr><th style="width:17%">Technologie</th><th style="width:26%">Rôle exact dans FitFlow</th><th>Ce que je réponds si on demande « pourquoi celle-là ? »</th></tr>
+<tr><td><strong>Express 4</strong></td><td>Serveur HTTP, 25 modules de routes, 133 endpoints</td><td>Le modèle de middlewares composables est exactement ce dont j'avais besoin : <code>authenticate</code> puis <code>authorize</code> puis controller, déclaré en une ligne par route. Fastify serait plus rapide, mais la performance de l'API n'a jamais été le facteur limitant — la latence venait du pooler de base</td></tr>
+<tr><td><strong>Prisma 5</strong></td><td>ORM, schéma unique de 36 modèles, source des migrations</td><td>Un seul fichier fait office de modèle logique, de générateur de client typé et de source de migrations. Le schéma <em>est</em> la documentation — c'est ce qui permet de générer les figures 12 et 13 du dossier. Contrepartie : les requêtes complexes se pensent en Prisma, pas en SQL, et il faut connaître le coût de chaque <code>include</code></td></tr>
+<tr><td><strong>PostgreSQL</strong></td><td>Source de vérité, 36 tables, 48 relations, 37 cascades</td><td>Le modèle est intrinsèquement relationnel : un client a des coachs, qui ont des programmes, qui ont des séances, qui ont des exercices, qui ont des validations. Les contraintes d'unicité composites (<code>ClientCoach</code>, <code>SetCompletion</code>, <code>Review</code>) portent des règles métier que du code applicatif devrait sinon garantir</td></tr>
+<tr><td><strong>JWT (HS256)</strong></td><td>Authentification sans état, 30 jours</td><td>Deux clients hétérogènes servis par un seul mécanisme, sans stockage de sessions partagé. HS256 et non RS256 parce qu'il n'y a qu'un seul émetteur et un seul vérificateur : une paire de clés asymétriques n'apporterait rien ici</td></tr>
+<tr><td><strong>bcrypt</strong></td><td>Hachage des mots de passe, 10 tours</td><td>Fonction lente par construction, avec sel intégré, et <code>compare</code> à temps constant. Argon2 est aujourd'hui préférable ; bcrypt reste un choix défendable et largement audité</td></tr>
+<tr><td><strong>Next.js 16</strong><br>App Router</td><td>Dashboard : routage par dossiers, 29 pages</td><td>Le routage par système de fichiers rend la structure des URL lisible, et les segments dynamiques (<code>[clientId]</code>, <code>[programId]</code>) évitent une table de routes à maintenir. <strong>Précision utile : 36 fichiers portent <code>"use client"</code></strong> — les données sont chargées par le navigateur, pas par le serveur Next. Je n'utilise donc ni composants serveur pour les données, ni actions serveur</td></tr>
+<tr><td><strong>React 19</strong></td><td>Interface du dashboard</td><td>Composants et hooks. Le compilateur React de cette version a d'ailleurs révélé deux vrais défauts au moment de réparer la chaîne d'intégration (15.3) : une lecture d'horloge pendant le rendu, et un <code>setState</code> synchrone dans un effet</td></tr>
+<tr><td><strong>TypeScript</strong></td><td>Dashboard uniquement</td><td>Le build échoue sur une erreur de type : c'est une gate de plus dans la chaîne. Le mobile est en JavaScript — asymétrie assumée, conséquence d'un démarrage plus rapide sur ce dépôt</td></tr>
+<tr><td><strong>Tailwind 4</strong></td><td>Style du dashboard, thème sombre</td><td>C'est la version 4 qui a rendu le thème sombre tenable : elle expose ses couleurs en variables <code>--color-*</code>, et surcharger 96 variables sous <code>[data-theme]</code> fait basculer 243 utilitaires d'un coup — y compris ceux des composants écrits après. C'est l'étude de cas 17.3</td></tr>
+<tr><td><strong>@dnd-kit</strong></td><td>Réordonnancement des exercices</td><td>Deux capteurs, dont un capteur clavier : le glisser-déposer reste opérable sans souris. C'était le critère de choix face à des bibliothèques plus anciennes fondées sur HTML5 drag-and-drop, dont l'accessibilité est mauvaise</td></tr>
+<tr><td><strong>React Native 0.81<br>+ Expo 54</strong></td><td>Application mobile</td><td>Une base de code pour iOS et Android, mes compétences React réutilisées, et aucune configuration native à maintenir. <strong>Conséquence assumée</strong> : Expo Go interdit les notifications push système et HealthKit — ces deux fonctionnalités sont hors périmètre <em>à cause de ce choix</em>, et je le présente ainsi</td></tr>
+<tr><td><strong>expo-secure-store</strong></td><td>Jeton sur mobile</td><td>Trousseau iOS / Keystore Android, plutôt qu'<code>AsyncStorage</code> qui écrit en clair. C'est une exigence du cahier des charges technique (T4.3)</td></tr>
+<tr><td><strong>axios</strong></td><td>Client HTTP des deux applications</td><td>Les intercepteurs sont la raison du choix : un seul endroit ajoute le jeton, un seul endroit traite les 401. Avec <code>fetch</code>, cette logique serait dupliquée à chaque appel ou enveloppée à la main</td></tr>
+<tr><td><strong>node-cron</strong></td><td>Trois tâches planifiées, dans le processus de l'API</td><td>Simple et suffisant : pas d'ordonnanceur externe à déployer. C'est aussi <strong>la raison du refus du serverless</strong> (décision 7) : sans processus permanent, le rappel H-1 toutes les 5 minutes devenait impossible</td></tr>
+<tr><td><strong>rrule</strong></td><td>Récurrence des rendez-vous</td><td>Implémentation du standard RFC 5545. Écrire ma propre syntaxe de récurrence aurait fermé la porte à toute interopérabilité avec un agenda tiers</td></tr>
+<tr><td><strong>Redis</strong></td><td>Cache du seul compteur de notifications</td><td>Le besoin est de mémoriser <em>une valeur volatile sous une clé, avec expiration</em> — c'est la définition d'un magasin clé-valeur. MongoDB aurait coché la case « NoSQL » sans répondre au problème. <strong>Non déployé</strong> : 10 $/mois pour un gain que la mesure ne réclame plus</td></tr>
+<tr><td><strong>node:test</strong></td><td>Tests backend, 168 tests</td><td>Runner natif de Node : une dépendance lourde en moins et aucune transpilation à configurer. C'est une conséquence directe de la veille technique (16.2)</td></tr>
+<tr><td><strong>Vitest + Testing Library</strong></td><td>41 tests de composants</td><td>Vitest partage la configuration de build du projet. Testing Library impose de tester ce que l'utilisateur voit — un test qui cherche un texte à l'écran résiste à un remaniement interne</td></tr>
+<tr><td><strong>Playwright</strong></td><td>5 tests de bout en bout</td><td>Le parcours d'authentification dans un vrai navigateur. Peu de tests, mais ils couvrent le chemin dont l'échec bloquerait tout le reste</td></tr>
+<tr><td><strong>helmet, compression,<br>express-rate-limit</strong></td><td>Défenses et sobriété du serveur</td><td>En-têtes de sécurité, gzip (72 % de réduction mesurée), et deux limiteurs — dont un strict sur <code>/login</code> et <code>/register</code> qui <strong>ne compte que les échecs</strong>, réglage trouvé après un effet de bord observé (16.3)</td></tr>
+</table>
+
+<h2><span class="num">7</span>Vingt questions techniques, et ce que je réponds</h2>
+
+<h3>7.1 Architecture et sécurité</h3>
+
+<table>
+<tr><th style="width:38%">Question</th><th>Réponse</th></tr>
+<tr><td><em>« Que se passe-t-il si j'ouvre <code>/coach/dashboard</code> sans être connecté ? »</em></td><td>La page s'affiche une fraction de seconde puis redirige : la garde est <strong>côté client</strong>, dans <code>app/(dashboard)/layout.tsx</code>, et il n'y a <strong>pas de <code>middleware.ts</code></strong>. Ce n'est pas un trou de sécurité — aucune donnée n'est dans le HTML, tout vient de l'API qui exige le jeton — mais c'est une garde d'ergonomie, pas de sécurité. Le correctif propre est un middleware Next qui vérifie la présence du jeton avant de rendre la route</td></tr>
+<tr><td><em>« Pourquoi le jeton est-il en <code>localStorage</code> sur le web ? »</em></td><td>C'est la faiblesse n° 1 de mon tableau 9.5 : une faille XSS permettrait de l'exfiltrer. Un cookie <code>httpOnly</code> + <code>SameSite=Strict</code> est la bonne réponse, avec une politique de sécurité de contenu à défaut. Sur mobile, le problème ne se pose pas : le jeton est dans le trousseau système</td></tr>
+<tr><td><em>« Un coach peut-il lire le programme d'un confrère ? »</em></td><td>Non, et c'est testé : <code>canAccessProgram</code> compare le profil coach de l'appelant au propriétaire du programme, et <code>__tests__/authorization.test.js</code> vérifie 18 tentatives de traversée qui doivent toutes renvoyer 403. Le second volet du test — 11 accès légitimes qui doivent renvoyer 200 — est indispensable : sans lui, un serveur qui refuse tout le monde passerait le premier</td></tr>
+<tr><td><em>« Pourquoi une requête en base à chaque appel authentifié ? »</em></td><td>Parce que <code>authenticate</code> ne vérifie pas seulement la signature du jeton : il recharge l'utilisateur pour statuer sur son statut de modération. Un compte suspendu doit être arrêté immédiatement, pas à l'expiration de son jeton. C'est un coût assumé et mesuré : le trajet vers la base est de 19 ms</td></tr>
+<tr><td><em>« Comment empêchez-vous quelqu'un de se déclarer administrateur ? »</em></td><td>La route d'inscription liste explicitement les rôles acceptés (<code>COACH</code> ou <code>CLIENT</code>) et cette garde a été conservée à l'ajout du rôle <code>ADMIN</code>. Il n'existe <strong>aucune route HTTP de promotion</strong> : un administrateur se crée en ligne de commande, ce qui suppose un accès au serveur</td></tr>
+</table>
+
+<h3>7.2 Données et cohérence</h3>
+
+<table>
+<tr><th style="width:38%">Question</th><th>Réponse</th></tr>
+<tr><td><em>« Pourquoi les répétitions sont-elles des chaînes de caractères ? »</em></td><td>Parce qu'en salle un client écrit « 12-15 », « AMRAP » ou « échec ». Un entier aurait refusé la saisie. Le prix est payé au calcul, dans <code>parseNumericField</code>, couverte par 42 tests unitaires. Et <code>durationAchieved</code> est un champ séparé pour que 45 secondes de gainage ne soient jamais comptées comme 45 répétitions</td></tr>
+<tr><td><em>« Que se passe-t-il si le coach modifie une séance déjà commencée ? »</em></td><td>Les exercices sont supprimés et recréés, et <code>SetCompletion</code> étant en <code>onDelete: Cascade</code>, <strong>les séries déjà validées disparaissent</strong>. C'est un défaut réel que j'ai identifié en préparant cette présentation. Le correctif est de réconcilier les exercices par identifiant plutôt que de remplacer le lot</td></tr>
+<tr><td><em>« Vos écritures multiples sont-elles atomiques ? »</em></td><td>Là où ça compte, oui : la proposition de rendez-vous (RDV + message), la série récurrente (racine + occurrences + message), l'acceptation d'une demande (statut + relation), les actions de modération. <strong>Une exception</strong> : l'enregistrement d'une séance fait <code>deleteMany</code> puis <code>createMany</code> hors transaction. C'est un oubli, pas un choix, et il est réparable en trois lignes</td></tr>
+<tr><td><em>« Comment évitez-vous les doublons ? »</em></td><td>Par des contraintes en base plutôt que par du code : <code>@@unique([clientId, coachId])</code> sur la relation, <code>@@unique([exerciseId, setNumber])</code> sur la validation d'une série, <code>@@unique([programId, date])</code> sur une séance, <code>@@unique([clientId, coachId])</code> sur un avis. Les <code>upsert</code> s'appuient dessus : c'est PostgreSQL qui garantit l'unicité, pas une vérification applicative qu'on pourrait oublier</td></tr>
+<tr><td><em>« Pourquoi 13 index seulement, pour 36 tables ? »</em></td><td>Un index accélère la lecture et coûte à chaque écriture. Ils sont posés là où une requête liste et filtre sur une plage : agenda d'un coach sur une période, compteur de notifications non lues, file de modération, comptes dont la suppression est échue. Jamais sur une colonne servie par sa clé primaire, que PostgreSQL indexe déjà</td></tr>
+<tr><td><em>« Le multi-coach, comment est-il modélisé ? »</em></td><td>Table de liaison <code>ClientCoach</code> <strong>porteuse d'attributs</strong> : <code>isPrimary</code>, <code>isActive</code>, dates de début et de fin. Une simple clé étrangère interdisait structurellement la fonctionnalité différenciante du produit — c'est l'étude de cas 17.1, et la migration a dû reprendre les données existantes</td></tr>
+</table>
+
+<h3>7.3 Temps réel, tâches planifiées, performance</h3>
+
+<table>
+<tr><th style="width:38%">Question</th><th>Réponse</th></tr>
+<tr><td><em>« Pourquoi du polling et pas des WebSockets ? »</em></td><td>Parce que le polling fonctionne sans changer la nature du déploiement, et que la fenêtre est bornée : 3 secondes, <strong>uniquement quand une conversation est ouverte</strong>. Je connais le coût — 200 requêtes pour dix minutes de conversation — et c'est la deuxième évolution prioritaire du dossier. Un canal persistant exige un serveur qui garde l'état des connexions, incompatible avec la mise en veille automatique des machines qui ramène le coût à zéro</td></tr>
+<tr><td><em>« Vos rappels de rendez-vous peuvent-ils partir en double ? »</em></td><td>Non : le champ <code>reminderSentAt</code> est le garde-fou. La requête ne sélectionne que les rendez-vous <code>CONFIRMED</code> dont le rappel est <code>null</code>, et l'écriture du champ les sort définitivement du périmètre. C'est de l'idempotence par la donnée, pas par un verrou</td></tr>
+<tr><td><em>« Combien de tâches planifiées, et pourquoi dans l'API ? »</em></td><td><strong>Trois</strong> : rappels J-1 à 8h00, rappels H-1 toutes les 5 minutes (fenêtre glissante de 55 à 65 minutes), purges de modération à 3h00. Elles vivent dans le processus de l'API — c'est ce qui a fait écarter le serverless, où aucun processus ne survit entre deux requêtes</td></tr>
+<tr><td><em>« Pourquoi une fenêtre de 55–65 minutes et pas exactement une heure ? »</em></td><td>Parce que la tâche s'exécute toutes les 5 minutes : une égalité stricte raterait tous les rendez-vous tombant entre deux exécutions. Dix minutes de fenêtre couvrent largement l'intervalle, et <code>reminderSentAt</code> empêche le doublon que ce chevauchement pourrait produire</td></tr>
+<tr><td><em>« Vos 300 ms de p95, vous les avez mesurés ? »</em></td><td>Oui, et le premier diagnostic était faux. J'avais attribué l'écart à la distance Paris–Irlande ; mesuré depuis la machine, le trajet vaut <strong>19 ms</strong>. Les 70 ms restants venaient du pooler en <strong>mode transaction</strong>, conçu pour le sans-serveur et inutile sur une machine persistante. Après bascule en mode session : de 512 à 245 ms sur l'endpoint le plus lourd. C'est le passage du dossier que je trouve le plus instructif</td></tr>
+<tr><td><em>« Pourquoi <code>Promise.all</code> partout ? »</em></td><td>Parce que ces requêtes sont indépendantes. Trois <code>await</code> successifs additionnent trois latences réseau ; en parallèle on paie la plus lente. C'est visible à l'accueil coach (3 appels) et à l'accueil client (2 appels)</td></tr>
+</table>
+
+<h3>7.4 Interface et qualité</h3>
+
+<table>
+<tr><th style="width:38%">Question</th><th>Réponse</th></tr>
+<tr><td><em>« Votre glisser-déposer est-il accessible ? »</em></td><td>Oui, et c'est mesuré : <code>KeyboardSensor</code> avec <code>sortableKeyboardCoordinates</code> est actif dans les deux contextes concernés. En revanche l'accessibilité globale du produit est inégale — 19 % des champs du dashboard sont correctement étiquetés, et le mobile n'a quasiment aucun <code>accessibilityLabel</code>. Le correctif du dashboard est concentré sur un composant partagé : <code>useId()</code> et un <code>htmlFor</code> corrigeraient d'un coup tous les champs qui l'emploient</td></tr>
+<tr><td><em>« Pourquoi 900 ms de temporisation sur le suivi quotidien ? »</em></td><td>Sans elle, chaque caractère du champ de notes part en requête et deux réponses arrivées dans le désordre écrasent la plus récente. Ce n'est pas du confort : c'est une protection contre une condition de course</td></tr>
+<tr><td><em>« Comment testez-vous sans simulacres ? »</em></td><td>Les tests d'intégration tournent contre une vraie base PostgreSQL et une vraie API HTTP : simuler l'ORM revient à tester le simulacre. Les contraintes d'unicité, les cascades et le comportement réel des requêtes ne se vérifient qu'ainsi. Contrepartie assumée : ces tests exigent une base disponible, ils ne sont pas exécutables à froid</td></tr>
+<tr><td><em>« Que vaut votre couverture ? »</em></td><td><strong>214 tests dans 21 fichiers</strong>, sur quatre niveaux, détaillés en annexe D du dossier. Aucun rapport de couverture n'est produit — c'est une limite que j'assume, et je préfère parler de ce qui est couvert que d'un pourcentage. Le seul manque identifié est le test de la règle de confirmation d'un rendez-vous</td></tr>
+</table>
+
+<h2><span class="num">8</span>Les écarts entre le dossier et le code</h2>
+
+<p>Sept écarts relevés en lisant le code pour ce document. Les connaître, c'est pouvoir les reconnaître avant qu'on les découvre.</p>
+
+<table>
+<tr><th style="width:5%">#</th><th style="width:26%">Le dossier dit</th><th style="width:30%">Le code fait</th><th>Ce que je réponds</th></tr>
+<tr><td>1</td><td>Application mobile « client uniquement » (6.2, figures 10 et 14)</td><td><code>AppNavigator</code> branche sur le rôle ; <strong>11 écrans coach</strong> existent et fonctionnent</td><td>Le mobile est <em>conçu</em> pour le client ; le côté coach est un héritage du démarrage du projet, resté fonctionnel. Le dossier a décrit la cible, pas l'état du code</td></tr>
+<tr><td>2</td><td>La séance passe « automatiquement » en <code>DONE</code> quand toutes les séries sont cochées (8.5, F5.4, extrait 10)</td><td>Le mobile calcule <code>allCompleted</code>, déverrouille un bouton, et le client confirme → <code>PUT /sessions/:id/validate</code></td><td>Le mécanisme est réel, son siège est le client. Formulation juste : « sans que le coach n'ait rien à faire ». La confirmation explicite transporte en plus la durée mesurée</td></tr>
+<tr><td>3</td><td>1RM estimé « par la formule d'Epley » (glossaire, F10.3)</td><td><strong>Brzycki</strong> si répétitions ≤ 10, <strong>Epley</strong> au-delà</td><td>Deux formules et un seuil : Brzycki est plus juste sur les faibles répétitions, Epley ne s'effondre pas sur les séries longues. Les tests le montrent explicitement</td></tr>
+<tr><td>4</td><td><code>clientProfile.coachId</code> « n'est plus alimenté » (5.6, et un commentaire dans <code>analyticsController</code>)</td><td>Il <strong>est encore écrit</strong> à l'acceptation d'un premier coach (<code>requests.controller</code>) et par <code>clientCoachController</code></td><td>C'est précisément pourquoi le bug de l'écran Analytics ne touchait qu'une partie des clients : le champ est alimenté sur certains chemins et pas sur d'autres. L'incohérence est réelle et le nettoyage reste à faire</td></tr>
+<tr><td>5</td><td>Bibliothèque de « 390+ » exercices (F4.9)</td><td><strong>416</strong> exactement, répartis en 10 groupes</td><td>L'exigence est un plancher, il est dépassé. L'annexe H du dossier le corrige déjà</td></tr>
+<tr><td>6</td><td>Chronomètre de repos « durées prédéfinies, boutons pause et passer » (brief de la figure retirée)</td><td>La durée vient du <code>restTime</code> de l'exercice ; il n'y a <strong>pas</strong> de durées prédéfinies ni de pause — seulement « Passer »</td><td>Le brief décrivait une intention, l'écran fait plus simple. La durée prescrite par le coach vaut mieux qu'un choix générique</td></tr>
+<tr><td>7</td><td>Enregistrement d'une séance présenté sans réserve (8.2)</td><td><code>deleteMany</code> + <code>createMany</code> hors transaction, avec cascade sur les validations du client</td><td>Défaut réel, identifié en préparant cette présentation, avec un correctif précis. Le reconnaître vaut mieux que de le laisser trouver</td></tr>
+</table>
+
+<h2><span class="num">9</span>Fiche de survie</h2>
+
+<h3>9.1 Dix fichiers à savoir citer</h3>
+
+<table>
+<tr><th style="width:44%">Chemin</th><th>Ce qu'il porte</th></tr>
+<tr><td><code>backend/src/server.js</code></td><td>Ordre des middlewares, montage des 25 routes, démarrage des crons</td></tr>
+<tr><td><code>backend/src/middlewares/auth.js</code></td><td><code>authenticate</code>, <code>authorize</code>, <code>authenticateEvenIfSuspended</code></td></tr>
+<tr><td><code>backend/src/utils/authorization.js</code></td><td>Les cinq règles d'appartenance</td></tr>
+<tr><td><code>backend/src/controllers/appointment.controller.js</code></td><td>Conflit, RRULE, règle de confirmation — le plus dense</td></tr>
+<tr><td><code>backend/src/controllers/sessionController.js</code></td><td><code>upsertSession</code> et <code>validateSession</code></td></tr>
+<tr><td><code>backend/src/utils/parseSetData.js</code></td><td><code>parseNumericField</code>, <code>estimate1RM</code>, <code>getISOWeek</code> — 42 tests</td></tr>
+<tr><td><code>backend/prisma/schema.prisma</code></td><td>36 modèles, 16 énumérations, contraintes et cascades</td></tr>
+<tr><td><code>mobile/src/screens/SessionDetailScreen.js</code></td><td>Validation des séries, les deux chronomètres</td></tr>
+<tr><td><code>mobile/src/services/api.js</code></td><td>Cache du jeton, intercepteurs, 23 modules d'appel</td></tr>
+<tr><td><code>dashboard/…/sessions/_components/session-editor.tsx</code></td><td>Glisser-déposer, validation, enregistrement</td></tr>
+</table>
+
+<h3>9.2 Huit chiffres à ne pas hésiter</h3>
+
+<table>
+<tr><th style="width:14%">Chiffre</th><th>Ce qu'il mesure</th><th style="width:14%">Chiffre</th><th>Ce qu'il mesure</th></tr>
+<tr><td><strong>36</strong></td><td>modèles Prisma</td><td><strong>214</strong></td><td>tests, 21 fichiers</td></tr>
+<tr><td><strong>25 / 133</strong></td><td>modules de routes / endpoints</td><td><strong>19 ms</strong></td><td>trajet API → base</td></tr>
+<tr><td><strong>27</strong></td><td>controllers</td><td><strong>245 ms</strong></td><td>p95 le plus lent, objectif 300</td></tr>
+<tr><td><strong>37</strong></td><td>relations en cascade</td><td><strong>3</strong></td><td>tâches planifiées</td></tr>
+</table>
+
+<h3>9.3 Trois démonstrations qui ne peuvent pas rater</h3>
+
+<table>
+<tr><th style="width:26%">Ce qu'on montre</th><th>Le chemin, et le point à souligner</th></tr>
+<tr><td><strong>Validation d'une série</strong></td><td>Mobile → séance du jour → cocher une série. Souligner : la valeur prescrite pré-remplie, le chrono de repos qui démarre seul, le compteur « n / total »</td></tr>
+<tr><td><strong>Glisser-déposer accessible</strong></td><td>Dashboard → séance → réordonner <strong>au clavier</strong>. C'est le geste qui prouve le <code>KeyboardSensor</code>, et peu de candidats le montrent</td></tr>
+<tr><td><strong>Cache observable</strong></td><td><code>GET /api/notifications/unread-count</code> deux fois : <code>cached: false</code> puis <code>cached: true</code>. Le champ existe exactement pour cette démonstration</td></tr>
+</table>
+
+<div class="warn"><b>Avant la démonstration</b> — réveiller le projet Supabase s'il s'est suspendu (plan gratuit : 7 jours d'inactivité), puis appeler <code>/api/health</code> une fois pour sortir les machines Fly de leur veille. Sans cela, le premier écran met plusieurs secondes à répondre.</div>
+
+<div class="decision">
+<h4>La phrase à garder pour la fin</h4>
+<p>Si une question porte sur un défaut — la cascade qui efface les validations, le polling, le jeton en <code>localStorage</code>, le test manquant — la meilleure réponse suit toujours la même forme : <strong>nommer le défaut, dire comment je l'ai trouvé, donner le correctif précis, et dire pourquoi il n'est pas fait.</strong> C'est ce que le dossier fait sur la latence de 14.5, et c'est le passage dont un jury se souvient.</p>
+</div>
+</div>
+

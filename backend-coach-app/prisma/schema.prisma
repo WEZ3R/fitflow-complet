@@ -1,0 +1,923 @@
+// This is your Prisma schema file
+// Documentation: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x", "darwin", "darwin-arm64", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // L'application passe par le pooler (pgbouncer). Les migrations ne le peuvent pas :
+  // elles ont besoin d'une session persistante, que le pooler en mode transaction
+  // n'accorde pas. D'où deux URL distinctes en production.
+  // En local, DIRECT_URL peut valoir la même chose que DATABASE_URL.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enumérations
+enum UserRole {
+  COACH
+  CLIENT
+  // Ajouté pour la modération. L'inscription publique refuse ce rôle
+  // (cf. authController.register) : un administrateur se crée en ligne de commande.
+  ADMIN
+}
+
+// Un compte n'est pas seulement actif ou supprimé : entre les deux, il y a la
+// suspension — réversible — et la suppression programmée, qui laisse un délai de recours.
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_DELETION
+}
+
+enum ReportReason {
+  HARASSMENT
+  SPAM
+  INAPPROPRIATE_CONTENT
+  FAKE_PROFILE
+  OTHER
+}
+
+// Le contexte d'où part le signalement : il détermine ce que l'administrateur
+// pourra consulter.
+enum ReportContext {
+  PROFILE
+  CONVERSATION
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  ACTIONED
+  DISMISSED
+}
+
+enum ModerationActionType {
+  SUSPEND
+  UNSUSPEND
+  SCHEDULE_DELETION
+  CANCEL_DELETION
+  DELETE
+  DISMISS_REPORT
+}
+
+enum AppealStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ClientLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum GoalCategory {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  FITNESS
+  REHAB
+  PERFORMANCE
+  ENDURANCE
+}
+
+enum CoachSpecialty {
+  STRENGTH
+  HYPERTROPHY
+  WEIGHT_LOSS
+  REHAB
+  ENDURANCE
+  CROSSFIT
+  YOGA
+  MOBILITY
+  POWERLIFTING
+  BODYBUILDING
+}
+
+enum TrainingSpotType {
+  PARK
+  TRACK
+  HOME
+  OUTDOOR
+  POOL
+  OTHER
+}
+
+enum SessionStatus {
+  EMPTY
+  DRAFT
+  DONE
+}
+
+enum ExerciseCategory {
+  WARMUP        // Échauffement
+  MAIN          // Exercices principaux (musculation, avec charge et répétitions)
+  RENFORCEMENT  // Travail isométrique ou au poids du corps, compté en TEMPS (gainage, chaise)
+  CARDIO        // Exercices cardio
+  STRETCHING    // Étirements
+}
+
+enum MessageType {
+  CHAT
+  TIP
+  APPOINTMENT_PROPOSAL
+}
+
+enum AppointmentStatus {
+  PROPOSED
+  CONFIRMED
+  CANCELLED
+}
+
+enum LocationType {
+  PHYSICAL
+  REMOTE
+  PHONE
+  GYM
+  CAFE
+  VISIO
+}
+
+// Modèle User principal
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  role      UserRole
+  firstName String?
+  lastName  String?
+  phone     String?
+  birthDate DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // ─── Modération ───────────────────────────────────────────────────────────
+  // Le motif et l'échéance ne sont pas décoratifs : sans eux, une sanction ne
+  // peut être ni comprise ni contestée par la personne qui la subit.
+  status            UserStatus @default(ACTIVE)
+  suspendedAt       DateTime?
+  suspendedUntil    DateTime?  // null sur une suspension sans terme
+  suspensionReason  String?
+  scheduledDeletionAt DateTime? // suppression différée : laisse le délai de recours
+
+  // Relations
+  coachProfile  CoachProfile?
+  clientProfile ClientProfile?
+  notifications Notification[]
+
+  reportsMade      Report[]           @relation("Reporter")
+  reportsReceived  Report[]           @relation("ReportedUser")
+  moderationActs   ModerationAction[] @relation("ModeratorActions")
+  sanctions        ModerationAction[] @relation("SanctionedUser")
+  accessLogs       ModerationAccessLog[]
+  appeals          Appeal[]           @relation("Appellant")
+  appealsReviewed  Appeal[]           @relation("AppealReviewer")
+
+  @@index([status, scheduledDeletionAt])
+  @@map("users")
+}
+
+// ─── MODÉRATION ─────────────────────────────────────────────────────────────
+
+/// Signalement d'un utilisateur, depuis son profil ou depuis une conversation.
+model Report {
+  id          String        @id @default(uuid())
+
+  // SetNull et non Cascade : si le signalant supprime son compte, le signalement
+  // doit survivre. L'effacer reviendrait à faire disparaître l'historique de
+  // modération d'un tiers, et à offrir un moyen d'annuler un signalement gênant.
+  reporterId  String?
+  reporter    User?         @relation("Reporter", fields: [reporterId], references: [id], onDelete: SetNull)
+
+  reportedId  String
+  reported    User          @relation("ReportedUser", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  reason      ReportReason
+  description String?       // précision libre, facultative
+  context     ReportContext
+  messageId   String?       // message visé, quand le signalement part d'une conversation
+
+  status      ReportStatus  @default(PENDING)
+  reviewedAt  DateTime?
+  resolution  String?       // motif de la décision, obligatoire à la clôture
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  accessLogs  ModerationAccessLog[]
+
+  @@index([status, createdAt])
+  @@index([reportedId])
+  @@map("reports")
+}
+
+/// Journal des décisions de modération — article 5.2 : il faut pouvoir démontrer
+/// qui a décidé quoi, quand, et pour quel motif.
+model ModerationAction {
+  id         String               @id @default(uuid())
+
+  // L'administrateur peut lui-même être supprimé un jour ; la trace de sa décision
+  // ne doit pas disparaître avec lui.
+  moderatorId String?
+  moderator   User?               @relation("ModeratorActions", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  targetId   String?
+  target     User?                @relation("SanctionedUser", fields: [targetId], references: [id], onDelete: SetNull)
+
+  // Conservé en clair : après suppression du compte, targetId devient null et
+  // cette valeur reste le seul repère permettant de justifier l'action.
+  targetLabel String?
+
+  type       ModerationActionType
+  reason     String               // jamais facultatif
+  metadata   Json?                // durée de suspension, date de suppression prévue…
+  createdAt  DateTime             @default(now())
+
+  @@index([targetId, createdAt])
+  @@map("moderation_actions")
+}
+
+/// Journal des consultations de contenu signalé. Lire une correspondance privée
+/// est un traitement en soi : il laisse une trace, comme tout accès à des
+/// données sensibles.
+model ModerationAccessLog {
+  id         String   @id @default(uuid())
+  moderatorId String?
+  moderator  User?    @relation(fields: [moderatorId], references: [id], onDelete: SetNull)
+  reportId   String?
+  report     Report?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  scope      String   // "REPORT_DETAIL" | "CONVERSATION" | "USER_FILE"
+  createdAt  DateTime @default(now())
+
+  @@index([reportId])
+  @@index([createdAt])
+  @@map("moderation_access_logs")
+}
+
+/// Recours contre une sanction — article 22 : une décision produisant des effets
+/// juridiques doit pouvoir être contestée devant un humain.
+model Appeal {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation("Appellant", fields: [userId], references: [id], onDelete: Cascade)
+  message     String
+  status      AppealStatus @default(PENDING)
+
+  reviewedById String?
+  reviewedBy   User?       @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  decision     String?     // motif de la réponse, obligatoire à la clôture
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@map("appeals")
+}
+
+// Notifications système
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // APPOINTMENT_CANCELLED | APPOINTMENT_MODIFIED
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// Profil Coach
+model CoachProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio            String?
+  experience     String?
+  rating         Float    @default(0)
+  ratingCount    Int      @default(0)
+  profilePicture String?  // URL de la photo de profil
+  city           String?  // Ville du coach
+  isRemote       Boolean  @default(false) // Coaching à distance
+  visibleInSearch Boolean @default(true)  // Apparaît dans la recherche publique des coachs
+  specialties    CoachSpecialty[]      // Spécialités du coach
+  latitude       Float?   // Géolocalisation
+  longitude      Float?
+  onboardingCompletedAt DateTime?       // Null = onboarding non finalisé
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  clients          ClientProfile[]     @relation("ClientCoach") // Ancien champ pour rétrocompatibilité
+  clientCoaches    ClientCoach[]       // Nouvelle relation many-to-many
+  gyms             CoachGym[]          // Salles d'entraînement
+  programs         Program[]
+  programTemplates ProgramTemplate[]
+  sessionTemplates SessionTemplate[]
+  sentMessages     Message[]           @relation("CoachMessages")
+  channels         Channel[]
+  reviews          Review[]
+  coachRequests    CoachRequest[]      // Demandes reçues
+  appointments     Appointment[]       @relation("CoachAppointments")
+  scheduleBlocks   CoachScheduleBlock[]
+  clientBlocks     CoachClientBlock[]  @relation("BlockingCoach")
+
+  @@map("coach_profiles")
+}
+
+// Profil Client
+model ClientProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coachId        String?   // Coach principal (pour rétrocompatibilité)
+  coach          CoachProfile? @relation("ClientCoach", fields: [coachId], references: [id])
+  weight         Float?    // Poids initial en kg
+  height         Float?    // Taille en cm
+  dateOfBirth    DateTime? // Date de naissance pour calculer l'âge
+  gender         String?   // Genre: M, F, ou X
+  goalCategory   GoalCategory? // Catégorie d'objectif structurée
+  customGoal     String?       // Objectif libre (complémentaire ou seul)
+  level          ClientLevel?  // Niveau sportif
+  profilePicture String?   // URL de la photo de profil
+  city           String?   // Ville du client
+  latitude       Float?    // Géolocalisation
+  longitude      Float?
+  visibleInProspection Boolean @default(true) // Apparaît dans la prospection des coachs
+  onboardingCompletedAt DateTime? // Null = onboarding non finalisé
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  coaches          ClientCoach[]   // Nouvelle relation many-to-many
+  gyms             ClientGym[]     // Salles d'entraînement fréquentées
+  trainingSpots    TrainingSpot[]  // Lieux custom (parcs, pistes, etc.)
+  stats            DailyStat[]
+  meals            Meal[]
+  receivedMessages Message[]       @relation("ClientMessages")
+  reviews          Review[]
+  coachRequests    CoachRequest[]  // Demandes envoyées
+  appointments     Appointment[]   @relation("ClientAppointments")
+  availabilities   ClientAvailability[]
+  blockedBy        CoachClientBlock[]  @relation("BlockedClient")
+
+  @@map("client_profiles")
+}
+
+// Table de liaison Client-Coach (relation many-to-many)
+model ClientCoach {
+  id          String        @id @default(uuid())
+  clientId    String
+  client      ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  coachId     String
+  coach       CoachProfile  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  isPrimary   Boolean       @default(false) // Indique si c'est le coach principal
+  startDate   DateTime      @default(now()) // Date de début de la relation
+  endDate     DateTime?     // Date de fin (si la relation se termine)
+  isActive    Boolean       @default(true)  // Relation active ou non
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([clientId, coachId])
+  @@map("client_coaches")
+}
+
+// Salle de sport (source OpenStreetMap/Overpass)
+model Gym {
+  id         String   @id @default(uuid())
+  osmId      String?  @unique // Déprécié : remplacé par source + sourceId. Conservé le temps de la transition.
+  // Provenance de la fiche. `osmId` seul ne permettait pas de dédupliquer une
+  // source non-OSM : deux imports différents ne pouvaient pas coexister.
+  source     String   @default("osm") // "osm" | "sirene"
+  sourceId   String? // "node/123456" pour OSM, le SIRET pour SIRENE
+  name       String
+  brand      String?  // "Basic-Fit", "Fitness Park"…
+  address    String?
+  city       String
+  postalCode String?
+  country    String   @default("FR")
+  latitude   Float
+  longitude  Float
+  // Position douteuse : plusieurs fiches empilées sur les mêmes coordonnées.
+  // SIRENE donne l'adresse ADMINISTRATIVE de l'établissement, qui pour un réseau
+  // de franchise est souvent le siège du franchiseur — « Kc Euralille » se
+  // retrouvait ainsi à Ventabren, à 900 km de Lille. Ces fiches sont exclues de
+  // la carte par défaut : un point au mauvais endroit est pire qu'un point absent.
+  approxPosition Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt @default(now())
+
+  clients ClientGym[]
+  coaches CoachGym[]
+
+  @@unique([source, sourceId])
+  @@index([city])
+  @@index([postalCode])
+  // La carte exclut par défaut les fiches à position douteuse : ce filtre porte
+  // sur chaque requête de recherche. L'index avait été créé par la migration
+  // gym_approx_position puis retiré du schéma sans migration ; on le redéclare
+  // pour que schéma et base cessent de diverger.
+  @@index([approxPosition])
+  @@map("gyms")
+}
+
+// Table pivot Client ↔ Gym
+model ClientGym {
+  clientId String
+  gymId    String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  gym      Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, gymId])
+  @@map("client_gyms")
+}
+
+// Table pivot Coach ↔ Gym
+model CoachGym {
+  coachId String
+  gymId   String
+  coach   CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  gym     Gym          @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  @@id([coachId, gymId])
+  @@map("coach_gyms")
+}
+
+// Lieux d'entraînement custom du client (parc, piste, adresse précise)
+model TrainingSpot {
+  id        String           @id @default(uuid())
+  clientId  String
+  client    ClientProfile    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      TrainingSpotType
+  label     String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime         @default(now())
+
+  @@map("training_spots")
+}
+
+// Programme d'entraînement
+model Program {
+  id          String   @id @default(uuid())
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  clientId    String
+  title       String
+  description String?  // Description optionnelle
+  cycleDays   Int?     // Durée du cycle en jours (optionnel)
+  startDate   DateTime
+  endDate     DateTime?  
+  isActive    Boolean  @default(true)
+
+  // Options de suivi
+  dietEnabled            Boolean @default(false)
+  dietType               String? // 'calories' ou 'menu'
+  targetCalories         Int?
+  waterTrackingEnabled   Boolean @default(false)
+  waterGoal              Float?  // Objectif d'eau en litres
+  sleepTrackingEnabled   Boolean @default(false)
+  weightTrackingEnabled  Boolean @default(false) // Suivi quotidien du poids
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sessions Session[]
+  mealPlans MealPlan[]
+  customGoals CustomGoal[]
+
+  @@map("programs")
+}
+
+// Template de séance (liste d'exercices réutilisable)
+model SessionTemplate {
+  id            String       @id @default(uuid())
+  coachId       String
+  coach         CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  exercisesData Json         // Array of exercise objects
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("session_templates")
+}
+
+// Programme type (template) réutilisable par le coach
+model ProgramTemplate {
+  id          String   @id @default(uuid())
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+
+  // Configuration du programme
+  cycleDays   Int?     // Durée du cycle en jours (optionnel)
+
+  // Options de suivi
+  dietEnabled            Boolean @default(false)
+  dietType               String? // 'calories' ou 'menu'
+  targetCalories         Int?
+  waterTrackingEnabled   Boolean @default(false)
+  waterGoal              Float?  // Objectif d'eau en litres
+  sleepTrackingEnabled   Boolean @default(false)
+  weightTrackingEnabled  Boolean @default(false) // Suivi quotidien du poids
+
+  // Paramètres de calcul nutritionnel automatique
+  nutritionObjective      String?  // 'maintien' | 'prise_de_masse' | 'seche'
+  nutritionActivityFactor Float?   // ex: 1.55
+  nutritionSurplus        Int?     // surplus personnalisé (kcal), null = défaut 300
+  nutritionDeficit        Int?     // déficit personnalisé (kcal), null = défaut 400
+
+  // Données structurées des séances et objectifs (stockées en JSON)
+  sessionsData    Json?  // Structure des séances avec exercices
+  customGoalsData Json?  // Liste des objectifs personnalisés
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("program_templates")
+}
+
+// Objectif quotidien personnalisé par le coach
+model CustomGoal {
+  id          String   @id @default(uuid())
+  programId   String
+  program     Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  title       String   // Ex: "Faire 10 minutes de méditation"
+  description String?  // Description optionnelle
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  completions GoalCompletion[]
+
+  @@map("custom_goals")
+}
+
+// Completion d'un objectif par le client (par jour)
+model GoalCompletion {
+  id           String     @id @default(uuid())
+  customGoalId String
+  customGoal   CustomGoal @relation(fields: [customGoalId], references: [id], onDelete: Cascade)
+  clientId     String
+  date         DateTime   // Date de completion
+  completed    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([customGoalId, clientId, date])
+  @@map("goal_completions")
+}
+
+// Séance d'entraînement (par jour)
+model Session {
+  id          String        @id @default(uuid())
+  programId   String
+  program     Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  date               DateTime
+  status             SessionStatus @default(EMPTY)
+  name               String?
+  isRestDay          Boolean       @default(false)
+  notes              String?
+  completedByClient  Boolean       @default(false)
+  durationSeconds    Int?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  // Relations
+  exercises Exercise[]
+  comments  Comment[]
+
+  @@unique([programId, date])
+  @@map("sessions")
+}
+
+// Exercice
+model Exercise {
+  id          String           @id @default(uuid())
+  sessionId   String
+  session     Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  category    ExerciseCategory
+  sets        Int?
+  reps        String?          // Peut être "12" ou "12-15" ou "AMRAP"
+  weight      String?
+  weightsPerSet Json?          // Array de poids par série, ex: ["20", "22.5", "25"]
+  restTime    String?          // Ex: "90s", "2min"
+  videoUrl    String?
+  gifUrl      String?
+  description String?
+  order       Int              @default(0)
+  duration    String?          // Durée pour cardio/stretching
+  exerciseRefId String?        // Référence vers ExerciseDB
+  supersetGroup String?        // Identifiant de groupe pour les super-sets (UUID partagé)
+  exerciseRef   ExerciseReference? @relation(fields: [exerciseRefId], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  setCompletions SetCompletion[]
+
+  @@map("exercises")
+}
+
+// Complétion d'une série (set) par le client
+model SetCompletion {
+  id          String    @id @default(uuid())
+  exerciseId  String
+  exercise    Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  setNumber   Int       // Numéro de la série (1, 2, 3, etc.)
+  repsAchieved String?  // Nombre de répétitions réalisées
+  // Temps tenu, pour un exercice de catégorie RENFORCEMENT.
+  // Champ SÉPARÉ et non réutilisation de repsAchieved : les calculs de volume et de
+  // 1RM lisent les répétitions, un « 60 » de gainage y serait compté comme
+  // 60 répétitions et gonflerait le volume d'un facteur soixante.
+  durationAchieved String? // Ex: "45s", "1min30"
+  weightUsed   String?  // Poids utilisé
+  rpe          Float?   // Rate of Perceived Exertion (6-10)
+  completed    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([exerciseId, setNumber])
+  @@map("set_completions")
+}
+
+// Plan alimentaire
+model MealPlan {
+  id          String   @id @default(uuid())
+  programId   String
+  program     Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dailyCalories Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  menuItems MenuItem[]
+
+  @@map("meal_plans")
+}
+
+// Élément de menu (repas suggéré)
+model MenuItem {
+  id          String   @id @default(uuid())
+  mealPlanId  String
+  mealPlan    MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  mealType    String   // "breakfast", "lunch", "dinner", "snack"
+  name        String
+  description String?
+  calories    Int?
+  protein     Float?
+  carbs       Float?
+  fats        Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("menu_items")
+}
+
+// Repas réel enregistré par le client
+model Meal {
+  id          String        @id @default(uuid())
+  clientId    String
+  client      ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date        DateTime
+  mealType    String        // "breakfast", "lunch", "dinner", "snack"
+  description String
+  photoUrl    String?
+  calories    Int
+  protein     Float?
+  carbs       Float?
+  fats        Float?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("meals")
+}
+
+// Statistiques quotidiennes du client
+model DailyStat {
+  id              String        @id @default(uuid())
+  clientId        String
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date            DateTime
+  sleepHours      Float?        // Heures de sommeil
+  bedTime         DateTime?     // Heure de coucher
+  wakeTime        DateTime?     // Heure de réveil
+  waterIntake     Float?        // Litres d'eau
+  weight          Float?        // Poids en kg
+  totalCalories   Int?          // Calculé automatiquement depuis les repas
+  workoutTime     DateTime?     // Heure de la séance
+  workoutDuration Int?          // Durée en minutes
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([clientId, date])
+  @@map("daily_stats")
+}
+
+// Commentaires du coach sur une journée
+model Comment {
+  id             String   @id @default(uuid())
+  sessionId      String?
+  session        Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  clientId       String
+  content        String
+  date           DateTime // Date concernée par le commentaire
+  isPastComment  Boolean  @default(true) // true = commentaire sur jour passé, false = tip futur
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("comments")
+}
+
+// Messages entre coach et client
+model Message {
+  id                String        @id @default(uuid())
+  coachId           String
+  coach             CoachProfile  @relation("CoachMessages", fields: [coachId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            ClientProfile @relation("ClientMessages", fields: [clientId], references: [id], onDelete: Cascade)
+  content           String
+  type              MessageType   @default(CHAT)
+  scheduledTime     DateTime?     // Pour les tips planifiés
+  isRead            Boolean       @default(false)
+  isSentByCoach     Boolean       @default(true)
+  appointmentId     String?       @unique
+  appointment       Appointment?  @relation("AppointmentMessage", fields: [appointmentId], references: [id], onDelete: SetNull)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("messages")
+}
+
+// Canal d'information du coach
+model Channel {
+  id          String       @id @default(uuid())
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  content     String
+  isPublished Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("channels")
+}
+
+// Avis des clients sur les coachs
+model Review {
+  id        String        @id @default(uuid())
+  coachId   String
+  coach     CoachProfile  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  clientId  String
+  client    ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  rating    Int           // 1-5
+  comment   String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([coachId, clientId])
+  @@map("reviews")
+}
+
+// Demandes d'entraînement des clients vers les coachs
+model CoachRequest {
+  id        String   @id @default(uuid())
+  coachId   String
+  coach     CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  clientId  String
+  client    ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  message   String   // Message du client
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([coachId, clientId]) // Un client ne peut envoyer qu'une seule demande par coach
+  @@map("coach_requests")
+}
+
+// Référentiel d'exercices (ExerciseDB)
+model ExerciseReference {
+  id               String   @id @default(uuid())
+  exerciseDbId     String   @unique  // ID ExerciseDB original
+  name             String
+  bodyParts        String[] // ["CHEST", "SHOULDERS"]
+  targetMuscles    String[] // ["Pectoralis Major"]
+  secondaryMuscles String[] // ["Triceps", "Deltoid"]
+  equipments       String[] // ["BARBELL", "DUMBBELL"]
+  exerciseType     String   // "STRENGTH", "CARDIO", "STRETCHING"...
+  gifUrl           String?  // URL du GIF animé
+  instructions     String[] // Étapes textuelles
+  createdAt        DateTime @default(now())
+
+  // Relation vers les exercices concrets
+  exercises        Exercise[]
+
+  @@map("exercise_references")
+}
+
+// Rendez-vous entre coach et client
+model Appointment {
+  id              String            @id @default(uuid())
+  title           String
+  coachId         String
+  coach           CoachProfile      @relation("CoachAppointments", fields: [coachId], references: [id], onDelete: Cascade)
+  clientId        String?
+  client          ClientProfile?    @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: SetNull)
+  startAt         DateTime
+  endAt           DateTime          // startAt + durationMinutes (pré-calculé pour les conflits)
+  durationMinutes Int
+  locationType    LocationType
+  locationDetail  String?           // adresse ou lien visio
+  meetingType     String?           // "PHONE" | "GYM" | "CAFE" | "VISIO"
+  status          AppointmentStatus @default(PROPOSED)
+  rrule           String?           // RRULE string sur le parent uniquement (null = ponctuel)
+  parentId        String?           // null = racine de série ou ponctuel
+  parent          Appointment?      @relation("AppointmentSeries", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children        Appointment[]     @relation("AppointmentSeries")
+  message         Message?          @relation("AppointmentMessage")
+  reminderSentAt  DateTime?         // Horodatage du rappel 1h envoyé (null = pas encore envoyé)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([coachId, startAt])
+  @@index([clientId, startAt])
+  @@map("appointments")
+}
+
+// Créneaux de disponibilité hebdomadaires du client
+model ClientAvailability {
+  id           String        @id @default(uuid())
+  clientId     String
+  client       ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int           // 0=Dimanche, 1=Lundi, ... 6=Samedi
+  startTime    String        // "09:00"
+  endTime      String        // "18:00"
+  contactTypes String[]      // ["PHONE","GYM","CAFE","VISIO"]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("client_availabilities")
+}
+
+// Jours bloqués par le coach dans son propre agenda
+model CoachScheduleBlock {
+  id          String       @id @default(uuid())
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int?         // 0=Dim … 6=Sam (null si ponctuel)
+  date        DateTime?    // null si récurrent
+  reason      String?
+  createdAt   DateTime     @default(now())
+
+  @@map("coach_schedule_blocks")
+}
+
+// Blocage d'un client spécifique par le coach
+model CoachClientBlock {
+  id           String        @id @default(uuid())
+  coachId      String
+  coach        CoachProfile  @relation("BlockingCoach", fields: [coachId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       ClientProfile @relation("BlockedClient", fields: [clientId], references: [id], onDelete: Cascade)
+  blockedUntil DateTime?     // null = permanent
+  reason       String?
+  createdAt    DateTime      @default(now())
+
+  @@unique([coachId, clientId])
+  @@map("coach_client_blocks")
+}
+
+// Base Ciqual (ANSES) - Aliments génériques français
+model CiqualFood {
+  id                 String @id @default(uuid())
+  ciqualCode         String @unique
+  name               String
+  groupName          String?
+  energyKcal100g     Float  @default(0)
+  proteins100g       Float  @default(0)
+  carbohydrates100g  Float  @default(0)
+  fat100g            Float  @default(0)
+  fiber100g          Float  @default(0)
+  sugars100g         Float  @default(0)
+  salt100g           Float  @default(0)
+
+  @@map("ciqual_foods")
+}

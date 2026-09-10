@@ -1,0 +1,729 @@
+// FitFlow — modèle physique de données
+// Généré depuis prisma/schema.prisma : le schéma applicatif fait autorité.
+// Toute divergence entre ce diagramme et la base vient d'une régénération oubliée.
+
+// ============================================================
+// ÉNUMÉRATIONS
+// ============================================================
+
+Enum UserRole {
+  COACH
+  CLIENT
+  ADMIN
+}
+
+Enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_DELETION
+}
+
+Enum ReportReason {
+  HARASSMENT
+  SPAM
+  INAPPROPRIATE_CONTENT
+  FAKE_PROFILE
+  OTHER
+}
+
+Enum ReportContext {
+  PROFILE
+  CONVERSATION
+}
+
+Enum ReportStatus {
+  PENDING
+  REVIEWING
+  ACTIONED
+  DISMISSED
+}
+
+Enum ModerationActionType {
+  SUSPEND
+  UNSUSPEND
+  SCHEDULE_DELETION
+  CANCEL_DELETION
+  DELETE
+  DISMISS_REPORT
+}
+
+Enum AppealStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+Enum ClientLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+Enum GoalCategory {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  FITNESS
+  REHAB
+  PERFORMANCE
+  ENDURANCE
+}
+
+Enum CoachSpecialty {
+  STRENGTH
+  HYPERTROPHY
+  WEIGHT_LOSS
+  REHAB
+  ENDURANCE
+  CROSSFIT
+  YOGA
+  MOBILITY
+  POWERLIFTING
+  BODYBUILDING
+}
+
+Enum TrainingSpotType {
+  PARK
+  TRACK
+  HOME
+  OUTDOOR
+  POOL
+  OTHER
+}
+
+Enum SessionStatus {
+  EMPTY
+  DRAFT
+  DONE
+}
+
+Enum ExerciseCategory {
+  WARMUP
+  MAIN
+  RENFORCEMENT
+  CARDIO
+  STRETCHING
+}
+
+Enum MessageType {
+  CHAT
+  TIP
+  APPOINTMENT_PROPOSAL
+}
+
+Enum AppointmentStatus {
+  PROPOSED
+  CONFIRMED
+  CANCELLED
+}
+
+Enum LocationType {
+  PHYSICAL
+  REMOTE
+  PHONE
+  GYM
+  CAFE
+  VISIO
+}
+
+// ============================================================
+// TABLES
+// ============================================================
+
+Table users {
+  id varchar [pk, not null, default: `uuid()`]
+  email varchar [unique, not null]
+  password varchar [not null]
+  role UserRole [not null]
+  firstName varchar
+  lastName varchar
+  phone varchar
+  birthDate timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+  status UserStatus [not null, default: `ACTIVE`]
+  suspendedAt timestamp
+  suspendedUntil timestamp
+  suspensionReason varchar
+  scheduledDeletionAt timestamp
+
+  indexes {
+    (status, scheduledDeletionAt)
+  }
+}
+
+Table reports {
+  id varchar [pk, not null, default: `uuid()`]
+  reporterId varchar
+  reportedId varchar [not null]
+  reason ReportReason [not null]
+  description varchar
+  context ReportContext [not null]
+  messageId varchar
+  status ReportStatus [not null, default: `PENDING`]
+  reviewedAt timestamp
+  resolution varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (status, createdAt)
+    (reportedId)
+  }
+}
+
+Table moderation_actions {
+  id varchar [pk, not null, default: `uuid()`]
+  moderatorId varchar
+  targetId varchar
+  targetLabel varchar
+  type ModerationActionType [not null]
+  reason varchar [not null]
+  metadata json
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (targetId, createdAt)
+  }
+}
+
+Table moderation_access_logs {
+  id varchar [pk, not null, default: `uuid()`]
+  moderatorId varchar
+  reportId varchar
+  scope varchar [not null]
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (reportId)
+    (createdAt)
+  }
+}
+
+Table appeals {
+  id varchar [pk, not null, default: `uuid()`]
+  userId varchar [not null]
+  message varchar [not null]
+  status AppealStatus [not null, default: `PENDING`]
+  reviewedById varchar
+  reviewedAt timestamp
+  decision varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (status, createdAt)
+  }
+}
+
+Table notifications {
+  id varchar [pk, not null, default: `uuid()`]
+  userId varchar [not null]
+  type varchar [not null]
+  title varchar [not null]
+  body varchar [not null]
+  data json
+  isRead boolean [not null, default: `false`]
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (userId, isRead)
+  }
+}
+
+Table coach_profiles {
+  id varchar [pk, not null, default: `uuid()`]
+  userId varchar [unique, not null]
+  bio varchar
+  experience varchar
+  rating float [not null, default: `0`]
+  ratingCount int [not null, default: `0`]
+  profilePicture varchar
+  city varchar
+  isRemote boolean [not null, default: `false`]
+  visibleInSearch boolean [not null, default: `true`]
+  specialties CoachSpecialty[]
+  latitude float
+  longitude float
+  onboardingCompletedAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table client_profiles {
+  id varchar [pk, not null, default: `uuid()`]
+  userId varchar [unique, not null]
+  coachId varchar
+  weight float
+  height float
+  dateOfBirth timestamp
+  gender varchar
+  goalCategory GoalCategory
+  customGoal varchar
+  level ClientLevel
+  profilePicture varchar
+  city varchar
+  latitude float
+  longitude float
+  visibleInProspection boolean [not null, default: `true`]
+  onboardingCompletedAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table client_coaches {
+  id varchar [pk, not null, default: `uuid()`]
+  clientId varchar [not null]
+  coachId varchar [not null]
+  isPrimary boolean [not null, default: `false`]
+  startDate timestamp [not null, default: `now()`]
+  endDate timestamp
+  isActive boolean [not null, default: `true`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (clientId, coachId) [unique]
+  }
+}
+
+Table gyms {
+  id varchar [pk, not null, default: `uuid()`]
+  osmId varchar [unique]
+  source varchar [not null, default: `"osm"`]
+  sourceId varchar
+  name varchar [not null]
+  brand varchar
+  address varchar
+  city varchar [not null]
+  postalCode varchar
+  country varchar [not null, default: `"FR"`]
+  latitude float [not null]
+  longitude float [not null]
+  approxPosition boolean [not null, default: `false`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (source, sourceId) [unique]
+    (city)
+    (postalCode)
+    (approxPosition)
+  }
+}
+
+Table client_gyms {
+  clientId varchar [not null]
+  gymId varchar [not null]
+}
+
+Table coach_gyms {
+  coachId varchar [not null]
+  gymId varchar [not null]
+}
+
+Table training_spots {
+  id varchar [pk, not null, default: `uuid()`]
+  clientId varchar [not null]
+  type TrainingSpotType [not null]
+  label varchar [not null]
+  address varchar
+  latitude float
+  longitude float
+  createdAt timestamp [not null, default: `now()`]
+}
+
+Table programs {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  clientId varchar [not null]
+  title varchar [not null]
+  description varchar
+  cycleDays int
+  startDate timestamp [not null]
+  endDate timestamp
+  isActive boolean [not null, default: `true`]
+  dietEnabled boolean [not null, default: `false`]
+  dietType varchar
+  targetCalories int
+  waterTrackingEnabled boolean [not null, default: `false`]
+  waterGoal float
+  sleepTrackingEnabled boolean [not null, default: `false`]
+  weightTrackingEnabled boolean [not null, default: `false`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table session_templates {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  name varchar [not null]
+  description varchar
+  exercisesData json [not null]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table program_templates {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  name varchar [not null]
+  description varchar
+  cycleDays int
+  dietEnabled boolean [not null, default: `false`]
+  dietType varchar
+  targetCalories int
+  waterTrackingEnabled boolean [not null, default: `false`]
+  waterGoal float
+  sleepTrackingEnabled boolean [not null, default: `false`]
+  weightTrackingEnabled boolean [not null, default: `false`]
+  nutritionObjective varchar
+  nutritionActivityFactor float
+  nutritionSurplus int
+  nutritionDeficit int
+  sessionsData json
+  customGoalsData json
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table custom_goals {
+  id varchar [pk, not null, default: `uuid()`]
+  programId varchar [not null]
+  title varchar [not null]
+  description varchar
+  order int [not null, default: `0`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table goal_completions {
+  id varchar [pk, not null, default: `uuid()`]
+  customGoalId varchar [not null]
+  clientId varchar [not null]
+  date timestamp [not null]
+  completed boolean [not null, default: `false`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (customGoalId, clientId, date) [unique]
+  }
+}
+
+Table sessions {
+  id varchar [pk, not null, default: `uuid()`]
+  programId varchar [not null]
+  date timestamp [not null]
+  status SessionStatus [not null, default: `EMPTY`]
+  name varchar
+  isRestDay boolean [not null, default: `false`]
+  notes varchar
+  completedByClient boolean [not null, default: `false`]
+  durationSeconds int
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (programId, date) [unique]
+  }
+}
+
+Table exercises {
+  id varchar [pk, not null, default: `uuid()`]
+  sessionId varchar [not null]
+  name varchar [not null]
+  category ExerciseCategory [not null]
+  sets int
+  reps varchar
+  weight varchar
+  weightsPerSet json
+  restTime varchar
+  videoUrl varchar
+  gifUrl varchar
+  description varchar
+  order int [not null, default: `0`]
+  duration varchar
+  exerciseRefId varchar
+  supersetGroup varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table set_completions {
+  id varchar [pk, not null, default: `uuid()`]
+  exerciseId varchar [not null]
+  setNumber int [not null]
+  repsAchieved varchar
+  durationAchieved varchar
+  weightUsed varchar
+  rpe float
+  completed boolean [not null, default: `true`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (exerciseId, setNumber) [unique]
+  }
+}
+
+Table meal_plans {
+  id varchar [pk, not null, default: `uuid()`]
+  programId varchar [not null]
+  title varchar [not null]
+  description varchar
+  dailyCalories int
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table menu_items {
+  id varchar [pk, not null, default: `uuid()`]
+  mealPlanId varchar [not null]
+  mealType varchar [not null]
+  name varchar [not null]
+  description varchar
+  calories int
+  protein float
+  carbs float
+  fats float
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table meals {
+  id varchar [pk, not null, default: `uuid()`]
+  clientId varchar [not null]
+  date timestamp [not null]
+  mealType varchar [not null]
+  description varchar [not null]
+  photoUrl varchar
+  calories int [not null]
+  protein float
+  carbs float
+  fats float
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table daily_stats {
+  id varchar [pk, not null, default: `uuid()`]
+  clientId varchar [not null]
+  date timestamp [not null]
+  sleepHours float
+  bedTime timestamp
+  wakeTime timestamp
+  waterIntake float
+  weight float
+  totalCalories int
+  workoutTime timestamp
+  workoutDuration int
+  notes varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (clientId, date) [unique]
+  }
+}
+
+Table comments {
+  id varchar [pk, not null, default: `uuid()`]
+  sessionId varchar
+  clientId varchar [not null]
+  content varchar [not null]
+  date timestamp [not null]
+  isPastComment boolean [not null, default: `true`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table messages {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  clientId varchar [not null]
+  content varchar [not null]
+  type MessageType [not null, default: `CHAT`]
+  scheduledTime timestamp
+  isRead boolean [not null, default: `false`]
+  isSentByCoach boolean [not null, default: `true`]
+  appointmentId varchar [unique]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table channels {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  title varchar [not null]
+  description varchar
+  content varchar [not null]
+  isPublished boolean [not null, default: `false`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table reviews {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  clientId varchar [not null]
+  rating int [not null]
+  comment varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (coachId, clientId) [unique]
+  }
+}
+
+Table coach_requests {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  clientId varchar [not null]
+  message varchar [not null]
+  status varchar [not null, default: `"pending"`]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (coachId, clientId) [unique]
+  }
+}
+
+Table exercise_references {
+  id varchar [pk, not null, default: `uuid()`]
+  exerciseDbId varchar [unique, not null]
+  name varchar [not null]
+  bodyParts varchar[]
+  targetMuscles varchar[]
+  secondaryMuscles varchar[]
+  equipments varchar[]
+  exerciseType varchar [not null]
+  gifUrl varchar
+  instructions varchar[]
+  createdAt timestamp [not null, default: `now()`]
+}
+
+Table appointments {
+  id varchar [pk, not null, default: `uuid()`]
+  title varchar [not null]
+  coachId varchar [not null]
+  clientId varchar
+  startAt timestamp [not null]
+  endAt timestamp [not null]
+  durationMinutes int [not null]
+  locationType LocationType [not null]
+  locationDetail varchar
+  meetingType varchar
+  status AppointmentStatus [not null, default: `PROPOSED`]
+  rrule varchar
+  parentId varchar
+  reminderSentAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (coachId, startAt)
+    (clientId, startAt)
+  }
+}
+
+Table client_availabilities {
+  id varchar [pk, not null, default: `uuid()`]
+  clientId varchar [not null]
+  dayOfWeek int [not null]
+  startTime varchar [not null]
+  endTime varchar [not null]
+  contactTypes varchar[]
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table coach_schedule_blocks {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  dayOfWeek int
+  date timestamp
+  reason varchar
+  createdAt timestamp [not null, default: `now()`]
+}
+
+Table coach_client_blocks {
+  id varchar [pk, not null, default: `uuid()`]
+  coachId varchar [not null]
+  clientId varchar [not null]
+  blockedUntil timestamp
+  reason varchar
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (coachId, clientId) [unique]
+  }
+}
+
+Table ciqual_foods {
+  id varchar [pk, not null, default: `uuid()`]
+  ciqualCode varchar [unique, not null]
+  name varchar [not null]
+  groupName varchar
+  energyKcal100g float [not null, default: `0`]
+  proteins100g float [not null, default: `0`]
+  carbohydrates100g float [not null, default: `0`]
+  fat100g float [not null, default: `0`]
+  fiber100g float [not null, default: `0`]
+  sugars100g float [not null, default: `0`]
+  salt100g float [not null, default: `0`]
+}
+
+// ============================================================
+// RELATIONS
+// ============================================================
+
+Ref: appeals.reviewedById > users.id
+Ref: appeals.userId > users.id
+Ref: appointments.clientId > client_profiles.id
+Ref: appointments.coachId > coach_profiles.id
+Ref: appointments.parentId > appointments.id
+Ref: channels.coachId > coach_profiles.id
+Ref: client_availabilities.clientId > client_profiles.id
+Ref: client_coaches.clientId > client_profiles.id
+Ref: client_coaches.coachId > coach_profiles.id
+Ref: client_gyms.clientId > client_profiles.id
+Ref: client_gyms.gymId > gyms.id
+Ref: client_profiles.coachId > coach_profiles.id
+Ref: client_profiles.userId > users.id
+Ref: coach_client_blocks.clientId > client_profiles.id
+Ref: coach_client_blocks.coachId > coach_profiles.id
+Ref: coach_gyms.coachId > coach_profiles.id
+Ref: coach_gyms.gymId > gyms.id
+Ref: coach_profiles.userId > users.id
+Ref: coach_requests.clientId > client_profiles.id
+Ref: coach_requests.coachId > coach_profiles.id
+Ref: coach_schedule_blocks.coachId > coach_profiles.id
+Ref: comments.sessionId > sessions.id
+Ref: custom_goals.programId > programs.id
+Ref: daily_stats.clientId > client_profiles.id
+Ref: exercises.exerciseRefId > exercise_references.id
+Ref: exercises.sessionId > sessions.id
+Ref: goal_completions.customGoalId > custom_goals.id
+Ref: meal_plans.programId > programs.id
+Ref: meals.clientId > client_profiles.id
+Ref: menu_items.mealPlanId > meal_plans.id
+Ref: messages.appointmentId > appointments.id
+Ref: messages.clientId > client_profiles.id
+Ref: messages.coachId > coach_profiles.id
+Ref: moderation_access_logs.moderatorId > users.id
+Ref: moderation_access_logs.reportId > reports.id
+Ref: moderation_actions.moderatorId > users.id
+Ref: moderation_actions.targetId > users.id
+Ref: notifications.userId > users.id
+Ref: program_templates.coachId > coach_profiles.id
+Ref: programs.coachId > coach_profiles.id
+Ref: reports.reportedId > users.id
+Ref: reports.reporterId > users.id
+Ref: reviews.clientId > client_profiles.id
+Ref: reviews.coachId > coach_profiles.id
+Ref: session_templates.coachId > coach_profiles.id
+Ref: sessions.programId > programs.id
+Ref: set_completions.exerciseId > exercises.id
+Ref: training_spots.clientId > client_profiles.id

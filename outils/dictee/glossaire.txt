@@ -1,0 +1,92 @@
+# Vocabulaire transmis à Whisper avant la transcription.
+#
+# Le modèle transcrit ce qu'il connaît : sans amorçage, « FitFlow » devient « FIFLO »
+# et « l'API » devient « la pi ». Ces termes sont donnés en exemple au décodeur, ce qui
+# suffit à les faire reconnaître.
+#
+# Une entrée par ligne. Les lignes vides et celles commençant par # sont ignorées.
+# Garder la liste courte : au-delà de deux cents mots environ, l'amorçage se dilue.
+
+# ── Identité ──
+Marc Yrius
+FitFlow
+Definima
+RNCP
+Concepteur Développeur d'Applications
+
+# ── Architecture ──
+API REST
+Node.js
+Express
+Prisma
+PostgreSQL
+Next.js
+React
+React Native
+Expo
+Redis
+Supabase
+Fly.io
+Vercel
+Cloudflare
+Docker
+Twig
+Bolt CMS
+Symfony
+
+# ── Domaine ──
+coach
+client
+séance
+programme
+exercice
+série
+répétitions
+RPE
+gainage
+renforcement
+BodyMap
+onboarding
+modération
+signalement
+suspension
+recours
+
+# ── Technique ──
+authentification
+JWT
+jeton
+middleware
+contrôleur
+endpoint
+migration
+schéma
+pooler
+mode session
+mode transaction
+latence
+p95
+intégration continue
+pipeline
+GitHub Actions
+déploiement
+RGPD
+RGAA
+accessibilité
+contraste
+lecteur d'écran
+
+# ── Corrections appliquées après transcription ──
+#
+# Syntaxe : ce_qui_sort => ce_qu_il_faut
+# Whisper confond ce qu'il n'a jamais vu écrit. L'amorçage ci-dessus suffit le plus
+# souvent ; ces règles rattrapent le reste. La substitution respecte les limites de mots
+# et la casse initiale.
+
+Marc Irius => Marc Yrius
+FIFLO => FitFlow
+Fitflow => FitFlow
+la pi => l'API
+Fly IO => Fly.io
+Next JS => Next.js
+Node JS => Node.js

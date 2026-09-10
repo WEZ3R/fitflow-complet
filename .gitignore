@@ -1,0 +1,30 @@
+# Dépendances, reconstruites par npm install
+node_modules/
+!backend-coach-app/node_modules/.prisma/
+
+# Secrets — jamais versionnés
+.env
+.env.*
+!.env.example
+
+# Artefacts de build
+.next/
+.expo/
+dist/
+build/
+playwright-report/
+test-results/
+
+# Environnement Python de l'outil de dictée
+.venv/
+__pycache__/
+*.pyc
+
+# Enregistrements vocaux
+*.wav
+*.mp3
+*.m4a
+
+# Système
+.DS_Store
+Thumbs.db

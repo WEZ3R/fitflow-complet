@@ -1,0 +1,64 @@
+name: CI Backend
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: coaching_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/coaching_app
+      # Le schéma déclare `directUrl` pour Supabase, dont le pooler en mode
+      # transaction ne supporte pas les migrations. Prisma exige la variable même
+      # quand elle ne sert pas : ici les deux pointent sur le même serveur.
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/coaching_app
+      JWT_SECRET: ci-test-secret-key
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Aligné sur l'image de production : le SDK Supabase exige un WebSocket
+          # natif, absent de Node 20.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild native modules
+        run: npm rebuild bcrypt --build-from-source
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Push schema to DB
+        run: npx prisma db push
+
+      - name: Run tests
+        run: npm test

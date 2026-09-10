@@ -1,0 +1,701 @@
+@import "tailwindcss";
+
+/* Sans "inline" : les utilitaires sortent en var(--color-primary-*), ce qui permet
+   au thème sombre de redéfinir l'échelle. Avec "inline", les valeurs seraient
+   substituées en dur et toute surcharge resterait sans effet. */
+@theme {
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
+}
+
+/* "inline" conservé ici : il aplatit l'indirection vers les variables de next/font */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  /* Conteneurs internes : discret, il ne doit pas concurrencer le contenu */
+  --scrollbar-thumb: rgba(15, 23, 42, 0.22);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.38);
+  /* Défileur de page : plus affirmé, c'est un repère de position dans le document */
+  --scrollbar-page-thumb: rgba(15, 23, 42, 0.42);
+  --scrollbar-page-thumb-hover: rgba(15, 23, 42, 0.60);
+  --scrollbar-page-track: rgba(15, 23, 42, 0.06);
+}
+
+/* Barre de défilement du site — hors @layer pour s'appliquer partout, y compris
+   dans les conteneurs stylés par des utilitaires Tailwind.
+   Firefox n'accepte que la largeur et les couleurs ; WebKit permet le détail. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  /* La bordure transparente + background-clip crée la marge autour du pouce,
+     sans quoi il touche les bords du couloir. */
+  background: var(--scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Défileur de page. Le sélecteur `html` l'emporte sur `*` et sur les
+   pseudo-éléments universels, ce qui permet de le traiter à part : plus large,
+   plus contrasté, avec un couloir visible pour situer la position dans la page. */
+html {
+  scrollbar-color: var(--scrollbar-page-thumb) var(--scrollbar-page-track);
+}
+html::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+html::-webkit-scrollbar-track {
+  background: var(--scrollbar-page-track);
+}
+html::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-page-thumb);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-page-thumb-hover);
+  background-clip: content-box;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+}
+
+@layer components {
+  /* Cadre défilant du calendrier : navigation aux flèches, l'animation vient du
+     CSS et non de scrollTo({behavior}) — c'est ce qui la laisse se dérouler
+     malgré l'accrochage. */
+  .calendar-scroller {
+    scroll-behavior: smooth;
+  }
+
+  /* Respecte le réglage système : pas d'animation si l'utilisateur l'a désactivée. */
+  @media (prefers-reduced-motion: reduce) {
+    .calendar-scroller {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@layer components {
+  /* Sidebar active icon glow */
+  .sidebar-icon-active {
+    filter: drop-shadow(0 0 6px #0ea5e9) drop-shadow(0 0 12px #0284c7aa);
+  }
+
+  .sidebar-line-glow {
+    box-shadow: 0 0 8px #0284c7, 0 0 4px #38bdf8;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème sombre — appliqué à tout le dashboard via data-theme sur <body>.
+
+   Principe : on ne remappe PAS les utilitaires un par un (le projet en utilise
+   243, dont une douzaine de teintes porteuses de sens). On surcharge les 96
+   variables --color-* de Tailwind, que TOUS ses utilitaires consomment.
+   La clarté OKLCH est inversée, avec deux rampes selon l'usage du pas :
+
+     50 → 300   fonds et bordures    plancher 30, coefficient 0.69
+     400 → 900  texte et icônes      plancher 28, coefficient 0.90
+
+   Les pas clairs de Tailwind deviennent ainsi des fonds sombres, et les pas foncés
+   du texte franchement clair. Une rampe unique plafonnait les titres à 84,5 % de
+   clarté, ce qui les rendait ternes sur les cartes.
+
+   Posé hors de tout @layer, donc prioritaire sur les utilitaires Tailwind.
+   ───────────────────────────────────────────────────────────────────────────── */
+[data-theme="lime"] {
+  --surface: #272727;        /* fond de page */
+  --surface-card: #323232;   /* cartes — un cran plus clair pour le relief */
+  --surface-nav: #1f1f1f;    /* sidebar — plus sombre, elle recule */
+  --surface-raised: #3d3d3d; /* lignes à l'intérieur d'une carte, un cran au-dessus d'elle */
+  --line: rgba(255, 255, 255, 0.11);
+  --radius-card: 20px;       /* .card est en rounded-lg (8px) par défaut */
+
+  --accent: #85e859;
+  --accent-tint: rgba(133, 232, 89, 0.15);
+  --accent-tint-strong: rgba(133, 232, 89, 0.26);
+  --accent-ink: #1c1c1c;     /* texte posé SUR l'accent — le blanc y est illisible */
+
+  /* Barre de défilement : discrète au repos, accentuée au survol */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.20);
+  --scrollbar-thumb-hover: rgba(133, 232, 89, 0.55);
+  /* Celle de la page est nettement plus visible */
+  --scrollbar-page-thumb: rgba(255, 255, 255, 0.38);
+  --scrollbar-page-thumb-hover: rgba(133, 232, 89, 0.75);
+  --scrollbar-page-track: rgba(255, 255, 255, 0.06);
+
+  /* Échelle de marque : ramenée sur l'accent, du plus sombre au plus clair */
+  --color-primary-50: rgba(133, 232, 89, 0.10);
+  --color-primary-100: rgba(133, 232, 89, 0.17);
+  --color-primary-200: rgba(133, 232, 89, 0.26);
+  --color-primary-300: #2d7e00;
+  --color-primary-400: #5cb82c;
+  --color-primary-500: #85e859;
+  --color-primary-600: #85e859;
+  --color-primary-700: #a6f487;
+  --color-primary-800: #bffaa9;
+  --color-primary-900: #d8ffca;
+
+
+  /* Familles décoratives ramenées sur l'accent : plus aucune icône de couleur
+     différente. red / orange / amber / yellow / rose restent eux-mêmes, ils
+     portent des alertes et des statuts, pas de la décoration. */
+  --color-blue-50: rgba(133, 232, 89, 0.10);
+  --color-blue-100: rgba(133, 232, 89, 0.17);
+  --color-blue-200: rgba(133, 232, 89, 0.26);
+  --color-blue-300: #2d7e00;
+  --color-blue-400: #5cb82c;
+  --color-blue-500: #85e859;
+  --color-blue-600: #85e859;
+  --color-blue-700: #a6f487;
+  --color-blue-800: #bffaa9;
+  --color-blue-900: #d8ffca;
+  --color-indigo-50: rgba(133, 232, 89, 0.10);
+  --color-indigo-100: rgba(133, 232, 89, 0.17);
+  --color-indigo-200: rgba(133, 232, 89, 0.26);
+  --color-indigo-300: #2d7e00;
+  --color-indigo-400: #5cb82c;
+  --color-indigo-500: #85e859;
+  --color-indigo-600: #85e859;
+  --color-indigo-700: #a6f487;
+  --color-indigo-800: #bffaa9;
+  --color-indigo-900: #d8ffca;
+  --color-violet-50: rgba(133, 232, 89, 0.10);
+  --color-violet-100: rgba(133, 232, 89, 0.17);
+  --color-violet-200: rgba(133, 232, 89, 0.26);
+  --color-violet-300: #2d7e00;
+  --color-violet-400: #5cb82c;
+  --color-violet-500: #85e859;
+  --color-violet-600: #85e859;
+  --color-violet-700: #a6f487;
+  --color-violet-800: #bffaa9;
+  --color-violet-900: #d8ffca;
+  --color-purple-50: rgba(133, 232, 89, 0.10);
+  --color-purple-100: rgba(133, 232, 89, 0.17);
+  --color-purple-200: rgba(133, 232, 89, 0.26);
+  --color-purple-300: #2d7e00;
+  --color-purple-400: #5cb82c;
+  --color-purple-500: #85e859;
+  --color-purple-600: #85e859;
+  --color-purple-700: #a6f487;
+  --color-purple-800: #bffaa9;
+  --color-purple-900: #d8ffca;
+  --color-sky-50: rgba(133, 232, 89, 0.10);
+  --color-sky-100: rgba(133, 232, 89, 0.17);
+  --color-sky-200: rgba(133, 232, 89, 0.26);
+  --color-sky-300: #2d7e00;
+  --color-sky-400: #5cb82c;
+  --color-sky-500: #85e859;
+  --color-sky-600: #85e859;
+  --color-sky-700: #a6f487;
+  --color-sky-800: #bffaa9;
+  --color-sky-900: #d8ffca;
+  --color-cyan-50: rgba(133, 232, 89, 0.10);
+  --color-cyan-100: rgba(133, 232, 89, 0.17);
+  --color-cyan-200: rgba(133, 232, 89, 0.26);
+  --color-cyan-300: #2d7e00;
+  --color-cyan-400: #5cb82c;
+  --color-cyan-500: #85e859;
+  --color-cyan-600: #85e859;
+  --color-cyan-700: #a6f487;
+  --color-cyan-800: #bffaa9;
+  --color-cyan-900: #d8ffca;
+  --color-emerald-50: rgba(133, 232, 89, 0.10);
+  --color-emerald-100: rgba(133, 232, 89, 0.17);
+  --color-emerald-200: rgba(133, 232, 89, 0.26);
+  --color-emerald-300: #2d7e00;
+  --color-emerald-400: #5cb82c;
+  --color-emerald-500: #85e859;
+  --color-emerald-600: #85e859;
+  --color-emerald-700: #a6f487;
+  --color-emerald-800: #bffaa9;
+  --color-emerald-900: #d8ffca;
+  --color-teal-50: rgba(133, 232, 89, 0.10);
+  --color-teal-100: rgba(133, 232, 89, 0.17);
+  --color-teal-200: rgba(133, 232, 89, 0.26);
+  --color-teal-300: #2d7e00;
+  --color-teal-400: #5cb82c;
+  --color-teal-500: #85e859;
+  --color-teal-600: #85e859;
+  --color-teal-700: #a6f487;
+  --color-teal-800: #bffaa9;
+  --color-teal-900: #d8ffca;
+  --color-green-50: rgba(133, 232, 89, 0.10);
+  --color-green-100: rgba(133, 232, 89, 0.17);
+  --color-green-200: rgba(133, 232, 89, 0.26);
+  --color-green-300: #2d7e00;
+  --color-green-400: #5cb82c;
+  --color-green-500: #85e859;
+  --color-green-600: #85e859;
+  --color-green-700: #a6f487;
+  --color-green-800: #bffaa9;
+  --color-green-900: #d8ffca;
+  --color-lime-50: rgba(133, 232, 89, 0.10);
+  --color-lime-100: rgba(133, 232, 89, 0.17);
+  --color-lime-200: rgba(133, 232, 89, 0.26);
+  --color-lime-300: #2d7e00;
+  --color-lime-400: #5cb82c;
+  --color-lime-500: #85e859;
+  --color-lime-600: #85e859;
+  --color-lime-700: #a6f487;
+  --color-lime-800: #bffaa9;
+  --color-lime-900: #d8ffca;
+  --color-fuchsia-50: rgba(133, 232, 89, 0.10);
+  --color-fuchsia-100: rgba(133, 232, 89, 0.17);
+  --color-fuchsia-200: rgba(133, 232, 89, 0.26);
+  --color-fuchsia-300: #2d7e00;
+  --color-fuchsia-400: #5cb82c;
+  --color-fuchsia-500: #85e859;
+  --color-fuchsia-600: #85e859;
+  --color-fuchsia-700: #a6f487;
+  --color-fuchsia-800: #bffaa9;
+  --color-fuchsia-900: #d8ffca;
+
+  /* Palette Tailwind inversée pour fond sombre (générée depuis les valeurs d'origine) */
+  --color-red-50: oklch(32.0% 0.013 17.38);
+  --color-red-100: oklch(34.4% 0.032 17.717);
+  --color-red-200: oklch(37.9% 0.062 18.334);
+  --color-red-300: oklch(43.2% 0.114 19.571);
+  --color-red-400: oklch(54.6% 0.191 22.216);
+  --color-red-500: oklch(60.6% 0.237 25.331);
+  --color-red-600: oklch(66.1% 0.245 27.325);
+  --color-red-700: oklch(72.6% 0.213 27.518);
+  --color-red-800: oklch(78.1% 0.177 26.899);
+  --color-orange-50: oklch(31.4% 0.016 73.684);
+  --color-orange-100: oklch(33.2% 0.038 75.164);
+  --color-orange-200: oklch(36.8% 0.076 70.697);
+  --color-orange-300: oklch(41.2% 0.128 66.29);
+  --color-orange-400: oklch(50.6% 0.183 55.934);
+  --color-orange-500: oklch(54.6% 0.213 47.604);
+  --color-orange-600: oklch(59.8% 0.222 41.116);
+  --color-orange-700: oklch(68.2% 0.195 38.402);
+  --color-amber-100: oklch(32.6% 0.059 95.617);
+  --color-amber-300: oklch(38.3% 0.169 91.605);
+  --color-amber-400: oklch(43.5% 0.189 84.429);
+  --color-amber-500: oklch(48.7% 0.188 70.08);
+  --color-amber-600: oklch(58.0% 0.179 58.318);
+  --color-amber-700: oklch(68.0% 0.163 48.998);
+  --color-yellow-50: oklch(30.9% 0.026 102.212);
+  --color-yellow-100: oklch(31.9% 0.071 103.193);
+  --color-yellow-200: oklch(33.8% 0.129 101.54);
+  --color-yellow-300: oklch(36.6% 0.182 98.111);
+  --color-yellow-400: oklch(41.3% 0.199 91.936);
+  --color-yellow-500: oklch(46.4% 0.184 86.047);
+  --color-yellow-600: oklch(56.7% 0.162 75.834);
+  --color-yellow-700: oklch(68.2% 0.135 66.442);
+  --color-yellow-800: oklch(75.2% 0.114 61.907);
+  --color-yellow-900: oklch(80.2% 0.095 57.708);
+  --color-rose-100: oklch(34.1% 0.03 12.58);
+  --color-rose-400: oklch(54.0% 0.194 13.428);
+  --color-rose-700: oklch(71.7% 0.222 16.935);
+  --color-gray-50: oklch(31.0% 0.002 247.839);
+  --color-gray-100: oklch(32.3% 0.003 264.542);
+  --color-gray-200: oklch(35.0% 0.006 264.531);
+  --color-gray-300: oklch(38.8% 0.01 258.338);
+  --color-gray-400: oklch(54.3% 0.022 261.325);
+  --color-gray-500: oklch(68.4% 0.027 264.364);
+  --color-gray-600: oklch(77.8% 0.03 256.802);
+  --color-gray-700: oklch(84.5% 0.034 259.733);
+  --color-gray-800: oklch(93.0% 0.033 256.848);
+  --color-gray-900: oklch(98.0% 0.034 264.665);
+
+  background: var(--surface);
+  color: #fff;
+}
+
+/* body conserve `bg-gray-50` de @layer base. Le thème étant désormais porté par
+   <html>, cette couleur redeviendrait visible : on impose la surface de page. */
+[data-theme="lime"] body {
+  background: var(--surface);
+  color: #fff;
+}
+
+/* Surfaces : bg-white sert de fond de carte et de popover, jamais de texte */
+[data-theme="lime"] .card {
+  background: var(--surface-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+}
+[data-theme="lime"] .bg-white { background-color: var(--surface-card); }
+/* Panneau translucide (page RDV) : #fff est figé dans le color-mix, hors d'atteinte
+   des variables — il resterait un pavé blanc vif sur fond sombre. */
+[data-theme="lime"] .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--surface-card) 90%, transparent);
+}
+
+/* Pages d'identification : le dégradé `from-primary-500 to-primary-700` couvrait
+   tout l'écran, donc en vert vif depuis que la marque est verdie. On le neutralise
+   au profit du gris de page, et la carte monte d'un cran pour se détacher. */
+[data-theme="lime"] [data-surface="auth"] {
+  background-image: none;
+  background-color: var(--surface);
+}
+[data-theme="lime"] [data-surface="auth"] .card {
+  background-color: var(--surface-raised);
+}
+
+/* Lignes internes aux cartes : le relief vient du fond, plus du filet clair.
+   La bordure est neutralisée plutôt que retirée du JSX, pour que le thème clair
+   reste intact et que la hauteur des lignes ne bouge pas. */
+[data-theme="lime"] [data-surface="raised"] {
+  background-color: var(--surface-raised);
+  border-color: transparent;
+}
+[data-theme="lime"] [data-surface="raised"]:hover {
+  background-color: #474747;
+}
+
+/* Sidebar : élément + attribut, donc plus spécifique que l'utilitaire .bg-white */
+aside[data-theme="lime"] {
+  background-color: var(--surface-nav);
+  border-right-color: var(--line);
+}
+
+/* Encre sombre sur les aplats d'accent qui portent du texte blanc.
+   Sur l'accent, `text-white` tombe à 1,5:1 — illisible. On impose donc la couleur
+   depuis le fond, cette règle non calquée l'emportant sur les utilitaires Tailwind.
+
+   Sélecteurs de classe EXACTS, jamais [class*=…] : la variante « outline » contient
+   `hover:bg-primary-50`, dont la sous-chaîne « bg-primary-5 » déclenchait l'encre
+   sombre en permanence et rendait « Proposer un RDV » illisible. */
+[data-theme="lime"] .bg-primary-600,
+[data-theme="lime"] .bg-indigo-600,
+[data-theme="lime"] .bg-blue-500,
+[data-theme="lime"] .bg-green-500,
+[data-theme="lime"] .bg-green-600 {
+  color: var(--accent-ink);
+}
+
+/* Boutons : un fond d'accent réclame une encre sombre */
+[data-theme="lime"] .btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+[data-theme="lime"] .btn-primary:hover { background-color: #9aee74; }
+
+[data-theme="lime"] .btn-secondary {
+  background-color: var(--accent-tint);
+  color: var(--accent);
+}
+[data-theme="lime"] .btn-secondary:hover { background-color: var(--accent-tint-strong); }
+
+/* Halos de la sidebar : calés sur le bleu primaire à l'origine */
+[data-theme="lime"] .sidebar-icon-active {
+  filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px rgba(133, 232, 89, 0.45));
+}
+[data-theme="lime"] .sidebar-line-glow {
+  box-shadow: 0 0 8px var(--accent), 0 0 4px rgba(133, 232, 89, 0.7);
+}
+
+/* Focus visible sur fond sombre */
+[data-theme="lime"] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@layer utilities {
+  @keyframes slideUp {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(-20px); opacity: 0.7; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(20px); opacity: 0.7; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-in-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-in-out;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Carte des salles (Leaflet)
+
+   Tout est piloté par les variables ci-dessous : changer la couleur de la carte
+   ne demande pas de toucher au composant. Elles héritent des jetons du thème et
+   retombent sur une valeur littérale si le thème n'est pas chargé.
+
+   Ces règles sont globales à dessein — Leaflet injecte ses propres classes dans
+   le DOM, hors de portée d'un module CSS.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.fitflow-map__frame {
+  --map-bg:        var(--surface-nav, #1f1f1f);
+  --map-border:    rgba(255, 255, 255, 0.11);
+  --map-pin:       #d8d8d8;
+  --map-pin-ring:  #171717;
+  --map-pin-on:    var(--accent, #85e859);
+  --map-panel:     var(--surface-card, #323232);
+  --map-panel-2:   var(--surface-raised, #3d3d3d);
+  --map-ink:       #f0f0f0;
+  --map-ink-muted: #a8a8a8;
+  --map-accent:    var(--accent, #85e859);
+  --map-accent-ink: var(--accent-ink, #1c1c1c);
+
+  /* Accord des tuiles avec le gris du site. Les tuiles sombres de CARTO sont
+     bleutées et un peu plus foncées que #272727 : on désature et on éclaircit
+     légèrement au lieu de les inverser — une inversion retournerait les teintes
+     et donnerait de la végétation rose. */
+  --map-tile-filter: saturate(0.55) brightness(1.12) contrast(0.95);
+
+  position: relative;
+  border: 1px solid var(--map-border);
+  background: var(--map-bg);
+}
+
+/* Thème clair : on neutralise l'accord de tuiles et on éclaircit les panneaux. */
+:root:not([data-theme="lime"]) .fitflow-map__frame {
+  --map-bg: #e8e8e8;
+  --map-border: rgba(0, 0, 0, 0.12);
+  --map-panel: #ffffff;
+  --map-panel-2: #f3f4f6;
+  --map-ink: #1f2937;
+  --map-ink-muted: #6b7280;
+  --map-pin: #ffffff;
+  --map-pin-ring: #4b5563;
+  --map-tile-filter: none;
+}
+
+.fitflow-map__frame.is-tuned .leaflet-tile-pane { filter: var(--map-tile-filter); }
+.fitflow-map .leaflet-container { background: var(--map-bg); font: inherit; }
+
+/* ── Marqueurs ──────────────────────────────────────────────────────────── */
+.fitflow-pin__dot {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--map-pin);
+  border: 3px solid var(--map-pin-ring);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+.fitflow-pin__dot.is-selected {
+  background: var(--map-pin-on);
+  transform: scale(1.4);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--map-pin-on) 28%, transparent);
+}
+.fitflow-pin:hover .fitflow-pin__dot { transform: scale(1.28); }
+.fitflow-pin__dot.is-selected:hover  { transform: scale(1.5); }
+
+/* ── Fiche au clic ──────────────────────────────────────────────────────── */
+.fitflow-map .leaflet-popup-content-wrapper {
+  background: var(--map-panel);
+  color: var(--map-ink);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
+}
+.fitflow-map .leaflet-popup-tip { background: var(--map-panel); }
+.fitflow-map .leaflet-popup-content { margin: 12px 14px; }
+.fitflow-map .leaflet-popup-close-button { color: var(--map-ink-muted) !important; }
+
+.fitflow-popup__title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+.fitflow-popup__brand { font-size: 11px; color: var(--map-accent); margin-top: 1px; }
+.fitflow-popup__line  { font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.fitflow-popup__muted { color: var(--map-ink-muted); }
+.fitflow-popup__action {
+  margin-top: 9px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--map-accent);
+  color: var(--map-accent-ink);
+  transition: filter 0.12s ease;
+}
+.fitflow-popup__action:hover { filter: brightness(1.08); }
+
+/* ── Contrôles et attribution ───────────────────────────────────────────── */
+.fitflow-map .leaflet-bar a,
+.fitflow-map .leaflet-control-attribution {
+  background: var(--map-panel);
+  color: var(--map-ink-muted);
+  border-color: var(--map-border);
+}
+.fitflow-map .leaflet-bar a:hover { background: var(--map-panel-2); color: var(--map-ink); }
+
+/* Attribution repliée derrière un ⓘ.
+   Elle ne peut pas être retirée — ODbL pour les données OpenStreetMap, conditions
+   d'usage pour les tuiles CARTO — mais les guides d'attribution d'OSM admettent
+   qu'elle soit repliée sur une carte interactive tant qu'elle reste atteignable.
+   Le texte demeure donc dans le DOM, lisible par les lecteurs d'écran, et se
+   déploie au survol comme au focus clavier. */
+.fitflow-map .leaflet-control-attribution {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  max-width: 18px;
+  margin: 0 6px 6px 0;
+  padding: 0;
+  border: 1px solid var(--map-border);
+  font-size: 10px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  transition: max-width 0.22s ease, padding-right 0.22s ease;
+}
+.fitflow-map .leaflet-control-attribution::before {
+  content: "ⓘ";
+  flex: 0 0 18px;
+  text-align: center;
+  opacity: 0.75;
+}
+.fitflow-map .leaflet-control-attribution:hover,
+.fitflow-map .leaflet-control-attribution:focus-within {
+  max-width: 340px;
+  padding-right: 8px;
+}
+.fitflow-map .leaflet-control-attribution a { color: var(--map-accent); }
+
+/* ── Bandeaux d'état ────────────────────────────────────────────────────── */
+.fitflow-map__badge {
+  position: absolute;
+  left: 8px;
+  bottom: 22px;
+  z-index: 500;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  background: color-mix(in oklab, var(--map-panel) 92%, transparent);
+  color: var(--map-ink);
+  border: 1px solid var(--map-border);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+.fitflow-map__badge--accent {
+  left: auto;
+  right: 8px;
+  top: 8px;
+  bottom: auto;
+  background: var(--map-accent);
+  color: var(--map-accent-ink);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Infobulles des graphiques (Recharts)
+
+   Recharts pose son fond blanc et sa bordure grise EN STYLE INLINE, mais laisse
+   la couleur du texte hériter. Sous un thème sombre, le titre héritait donc du
+   blanc de `body` et se retrouvait blanc sur blanc — illisible. D'où le
+   `!important` : il n'y a pas d'autre moyen de reprendre un style inline.
+
+   Les valeurs, elles, portent la couleur de leur série en inline : on ne les
+   touche pas, c'est ce qui permet de relier une ligne à son chiffre.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="lime"] .recharts-default-tooltip {
+  background-color: var(--surface-card, #323232) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 10px !important;
+  color: #f2f2f2 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="lime"] .recharts-tooltip-label {
+  color: #ffffff !important;
+  font-weight: 600;
+  margin-bottom: 2px !important;
+}
+
+/* Trait de survol : le gris clair par défaut brille sur un fond sombre. */
+[data-theme="lime"] .recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.06) !important;
+  stroke: rgba(255, 255, 255, 0.18) !important;
+}

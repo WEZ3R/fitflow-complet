@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>FitFlow — Cahier des charges</title>
+<style>
+@page { size: A4; margin: 10mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 8.1pt; line-height: 1.32; color: #1c1f26; margin: 0; }
+h1 { font-size: 15pt; margin: 0 0 1.2mm; color: #4338ca; letter-spacing: -.2pt; }
+h1 + .sub { font-size: 8.4pt; color: #6b7280; margin: 0 0 2.6mm; padding-bottom: 1.8mm; border-bottom: 2px solid #4338ca; }
+h2 { font-size: 9.3pt; margin: 2.8mm 0 1.2mm; color: #312e81; border-left: 3px solid #6366f1; padding-left: 2.4mm; }
+p { margin: 0 0 1.4mm; text-align: justify; }
+ol, ul { margin: 0 0 1.4mm; padding-left: 5mm; }
+li { margin-bottom: 0.7mm; }
+table { width: 100%; border-collapse: collapse; margin: 0 0 1.8mm; font-size: 7.6pt; }
+th { background: #eef2ff; color: #312e81; text-align: left; font-weight: 600; }
+th, td { border: 1px solid #d4d7e3; padding: 0.9mm 1.5mm; vertical-align: top; }
+td:first-child { width: 26%; }
+.two td { width: 50%; }
+strong { color: #111827; }
+.avoid { break-inside: avoid; }
+</style></head><body style="zoom:0.90">
+
+<h1>FitFlow — Cahier des charges (synthèse)</h1>
+<p class="sub">Plateforme de coaching sportif · API REST + dashboard web + application mobile</p>
+
+<h2>1. Origine du projet</h2>
+<p>Le projet part d'un besoin exprimé par un <strong>coach sportif indépendant</strong> de mon entourage. Son suivi client repose sur un empilement d'outils non conçus pour ça : programmes d'entraînement dans un tableur, échanges et photos de progression sur WhatsApp, rendez-vous dans un agenda séparé, conseils nutritionnels dictés à l'oral. Résultat : l'information est éclatée, rien n'est historisé, et le temps passé à recopier des séances est du temps non facturé.</p>
+<p>Le problème n'est pas le manque d'outils fitness — c'est qu'<strong>aucun ne réunit la vue coach et la vue client sur la même donnée</strong>.</p>
+
+<h2>2. Problème à résoudre</h2>
+<table class="two avoid">
+<tr><th>Pour le coach</th><th>Pour le client</th></tr>
+<tr><td>Reconstruire un programme à la main pour chaque client</td><td>Ne pas savoir quoi faire une fois en salle</td></tr>
+<tr><td>Ignorer si la séance a réellement été faite</td><td>Perdre ses performances passées d'une séance à l'autre</td></tr>
+<tr><td>Dispersion des échanges sur plusieurs canaux</td><td>Ne pouvoir suivre qu'un seul coach à la fois</td></tr>
+<tr><td>Aucune vue chiffrée de la progression de son portefeuille</td><td>Nutrition traitée à part de l'entraînement</td></tr>
+</table>
+
+<h2>3. Solution proposée</h2>
+<p>Une plateforme de coaching sportif <strong>tout-en-un</strong>, articulée autour de quatre partis pris :</p>
+<ol>
+<li><strong>Un seul outil pour toute la relation</strong> — programmes, séances, nutrition, rendez-vous, messagerie et statistiques dans un même produit, plutôt que cinq applications juxtaposées.</li>
+<li><strong>Multi-coach assumé</strong> — un client peut être suivi simultanément par plusieurs coachs (musculation, nutrition, préparation physique) avec la notion de coach principal. C'est la principale différenciation face aux plateformes existantes, structurellement mono-coach.</li>
+<li><strong>Suivi terrain en temps réel</strong> — le client valide ses séries depuis son téléphone pendant l'entraînement ; le coach voit la charge et les répétitions réellement effectuées et ajuste le programme suivant sur du réel, pas du déclaratif.</li>
+<li><strong>Nutrition intégrée</strong> — plans alimentaires et suivi des apports adossés à la base officielle française <strong>CIQUAL</strong>, dans le même produit que l'entraînement.</li>
+</ol>
+
+<h2>4. Réponse fonctionnelle</h2>
+<ul>
+<li><strong>Coach</strong> : gestion du portefeuille clients, création de programmes et de séances (bibliothèque d'exercices, templates réutilisables, planification calendaire par glisser-déposer), suivi de progression par client, tableau de bord analytique, agenda et rendez-vous, messagerie.</li>
+<li><strong>Client</strong> : consultation du programme du jour, exécution guidée de la séance avec validation des séries et minuteur de repos, saisie des statistiques quotidiennes (hydratation, calories, sommeil, repas), recherche et demande de mise en relation avec un coach, messagerie, rendez-vous.</li>
+<li><strong>Transverse</strong> : authentification JWT avec rôles COACH / CLIENT, notifications, rappels de rendez-vous automatisés, avis et évaluations, salles de sport et lieux d'entraînement.</li>
+</ul>
+
+<h2>5. Architecture et stack</h2>
+<p>Architecture en trois applications autour d'une <strong>API REST unique</strong>, ce qui permet à un client web et à un client mobile de partager exactement la même logique métier et le même modèle de données.</p>
+<table class="avoid">
+<tr><th>Brique</th><th>Technologie</th><th>Justification du choix</th></tr>
+<tr><td><strong>API</strong><br>backend-coach-app</td><td>Node.js (ES Modules), Express 4, JWT, bcrypt, multer, express-validator</td><td>Stack légère et maîtrisée ; un seul langage (JavaScript) sur les trois briques réduit le coût de contexte</td></tr>
+<tr><td><strong>Base de données</strong></td><td>PostgreSQL + Prisma 5</td><td>Le domaine est fortement relationnel (client ↔ coach ↔ programme ↔ séance ↔ exercice ↔ série) ; Prisma apporte des migrations versionnées et un typage du schéma</td></tr>
+<tr><td><strong>Dashboard web</strong><br>fitflow-dashboard</td><td>Next.js 16, React 19, Tailwind, Recharts, dnd-kit</td><td>Interface de production du coach : construction de programmes au glisser-déposer et graphiques de progression, difficilement confortables sur mobile</td></tr>
+<tr><td><strong>App mobile</strong><br>coach-mobile-app</td><td>React Native 0.81 / Expo 54, React Navigation, expo-secure-store</td><td>Le client utilise l'app <strong>en salle</strong> : le mobile est le seul support pertinent ; Expo évite le coût d'une double base native iOS/Android</td></tr>
+</table>
+<p>Le modèle de données compte aujourd'hui une trentaine d'entités et un jeu de données de démonstration d'environ 35 utilisateurs et 1 600 séances, dimensionné pour éprouver les écrans sur des volumes réalistes.</p>
+
+<h2>6. Périmètre</h2>
+<p><strong>Dans le MVP</strong> : authentification et rôles, relation multi-coach, programmes et séances, exécution et validation de séance, statistiques quotidiennes, nutrition, messagerie, rendez-vous, tableau de bord coach.</p>
+<p><strong>Hors périmètre (non-objectifs)</strong> : paiement et facturation en ligne, notifications push, mode hors-ligne, visioconférence, application mobile dédiée aux coachs, ouverture d'une API publique à des tiers.</p>
+
+<h2>7. Hypothèses à valider</h2>
+<table class="avoid">
+<tr><th>Hypothèse</th><th>Comment la tester</th></tr>
+<tr><td>Le besoin multi-coach concerne une part significative des clients, pas seulement un cas isolé</td><td>Entretiens avec 5 à 10 coachs indépendants</td></tr>
+<tr><td>Le client accepte de saisir ses séries pendant la séance plutôt qu'après</td><td>Test d'usage en salle sur 2 semaines</td></tr>
+<tr><td>Le coach est prêt à abandonner son tableur pour un outil imposé à ses clients</td><td>Pilote sur un coach réel et son portefeuille</td></tr>
+</table>
+
+</body></html>

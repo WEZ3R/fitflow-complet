@@ -1,0 +1,19 @@
+FROM node:22-alpine
+
+# Dépendances système pour compiler bcrypt et Prisma
+RUN apk add --no-cache python3 make g++ openssl-dev openssl
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Toutes les dépendances (dev incluses : nodemon)
+RUN npm install
+
+COPY . .
+
+RUN npx prisma generate
+
+EXPOSE 5001
+
+CMD ["npm", "run", "dev"]
