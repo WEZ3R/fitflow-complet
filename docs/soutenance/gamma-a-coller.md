@@ -8,23 +8,23 @@ Marc Yrius — Titre professionnel Concepteur Développeur d'Applications RNCP 3
 
 ## Déroulé
 
-1. **Contexte** (4 min) — Le problème · Les utilisateurs · L'objectif · La problématique
+1. **Contexte** — Le problème · Les utilisateurs · L'objectif · La problématique
 
-2. **Besoin et conception** (5 min) — Les personas · Les besoins · Les maquettes · L'architecture
+2. **Besoin et conception** — Les personas · Les besoins · Les maquettes · L'architecture
 
-3. **Réalisation** (10 min) — Backend · Les trois clients · Démonstration — parcours type · Ce que la démo a montré
+3. **Réalisation** — Backend · Les trois clients · Démonstration — parcours type · Ce que la démo a montré
 
-4. **Conduite de projet** (3 min) — Les jalons · Depuis le dossier · La méthode
+4. **Conduite de projet** — Les jalons · Depuis le dossier · La méthode
 
-5. **Base de données** (3 min) — PostgreSQL · Le modèle · Accès aux données
+5. **Base de données** — PostgreSQL · Le modèle · Accès aux données
 
-6. **Sécurité** (4 min) — Mots de passe · Jetons JWT · Rôles · Validation
+6. **Sécurité** — Mots de passe · Jetons JWT · Rôles · Validation
 
-7. **Tests** (3 min) — Volume et niveaux · Intégration · Cas de sécurité
+7. **Tests** — Volume et niveaux · Intégration · Cas de sécurité
 
-8. **Déploiement et DevOps** (4 min) — Environnement · Intégration continue · Mise en production
+8. **Déploiement et DevOps** — Environnement · Intégration continue · Mise en production
 
-9. **Bilan** (4 min) — Difficultés · Solutions · Limites · Évolutions
+9. **Bilan** — Difficultés · Solutions · Limites · Évolutions
 
 ---
 

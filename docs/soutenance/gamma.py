@@ -114,11 +114,9 @@ def extraire():
                 num = re.search(r'<span class="num">(.*?)</span>', e, re.S)
                 lib = re.search(r'<span class="lib">(.*?)(?:<br>|<span class="det">)', e, re.S)
                 det = re.search(r'<span class="det">(.*?)</span>', e, re.S)
-                duree = re.search(r'<span class="duree">(.*?)</span>', e, re.S)
-                lignes.append('%s. **%s** (%s) — %s' % (
+                lignes.append('%s. **%s** — %s' % (
                     _texte(num.group(1)) if num else '-',
                     _texte(lib.group(1)) if lib else '',
-                    _texte(duree.group(1)) if duree else '',
                     _texte(det.group(1)) if det else ''))
             cartes.append('\n\n'.join(lignes))
             continue
